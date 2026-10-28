@@ -1,5 +1,10 @@
 # Multimodal Disease Progression Lab
 
+**Live interactive demo:** https://multimodal-disease-progression-lab.onrender.com
+
+**GitHub source:** https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab
+
+
 A runnable, educational machine-learning-in-medicine research demonstration aligned with five broad themes in a multimodal disease-progression PhD advertisement: multimodal fusion, sparse longitudinal progression, causal treatment-effect estimation, missing modalities, and subgroup evaluation.
 
 **Synthetic data only.** This project does not use real medical images or patient records, diagnose disease, recommend treatment, or establish clinical performance. Stage labels and all simulated outcomes are artificial. The project is a software/methods demonstration, not a clinical tool or a claim to reproduce any supervisor's unpublished research.
@@ -52,4 +57,4 @@ The causal analysis only demonstrates whether estimators recover an effect in a 
 - `.github/workflows/tests.yml` — CI test and smoke experiment.
 - `examples/sample_run_summary.json` — saved sample output from a synthetic run.
 
-See `GITHUB_SETUP.md` for maintenance instructions and `DEPLOYMENT.md` for Streamlit Community Cloud deployment. The hosted URL is only assigned after you complete deployment in your authenticated Streamlit workspace. Never commit real patient data, credentials or identifiable health information.
+See `GITHUB_SETUP.md` for maintenance instructions and `DEPLOYMENT.md` for the Render service URL, deployment configuration, and live smoke-check steps. Render's free service may sleep when idle. Never commit real patient data, credentials or identifiable health information.

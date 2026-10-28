@@ -52,7 +52,7 @@ with st.sidebar:
             "Public demo privacy warning: do not upload names, dates of birth, medical record numbers, "
             "identifiable health records, or data you are not authorised to use."
         )
-        uploaded_file = st.file_uploader("Upload a completed longitudinal CSV", type=["csv"])
+        uploaded_file = st.file_uploader("Upload a completed longitudinal CSV", type=["csv"], max_upload_size=20)
 
 raw_uploaded_frame = None
 uploaded_cohort = None

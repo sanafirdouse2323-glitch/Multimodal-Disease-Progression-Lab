@@ -32,3 +32,10 @@ streamlit run app.py
 For an initial live check, open the public app, choose 120 synthetic patients and 5 neural epochs, click **Run full experiment**, and confirm the six tabs, benchmark table, missingness chart, causal estimates, subgroup metrics, and CSV/JSON downloads.
 
 All data are synthetic. The app is an educational research demonstration, not a clinical tool. Never commit patient records, credentials, or identifiable health information.
+
+
+## CSV upload and empty template
+
+The app provides three modes in the sidebar: **Synthetic demo**, **Upload CSV**, and **Empty CSV template**. The blank template has headers only. Uploaded files must be a longitudinal table with one row per visit and required columns `patient_id`, `time_months`, and `current_stage` (integer codes 0–3). Optional numerical feature columns are documented in `UPLOAD_DATA_GUIDE.md`.
+
+The public hosted app receives uploaded files. Never upload identifiable or confidential health data. The uploader accepts numerical feature-level columns only, not raw medical images or raw wearable sensor files. The validation checks format and minimum structural requirements; it does not approve a clinical dataset or prove clinical validity. The causal-effect tab always uses a separate synthetic simulation, even when a progression CSV is uploaded.

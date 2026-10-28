@@ -1,8 +1,10 @@
-numpy>=1.26
-pandas>=2.1
-scikit-learn>=1.4
-scipy>=1.11
-torch>=2.2
-streamlit>=1.40
-plotly>=5.20
-pytest>=8.0
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+numpy>=1.26,<3
+pandas>=2.1,<4
+scikit-learn>=1.4,<2
+scipy>=1.11,<2
+torch==2.7.1+cpu
+streamlit==1.66.1
+plotly>=5.20,<8
+pytest>=8,<10

@@ -52,4 +52,4 @@ The causal analysis only demonstrates whether estimators recover an effect in a 
 - `.github/workflows/tests.yml` — CI test and smoke experiment.
 - `examples/sample_run_summary.json` — saved sample output from a synthetic run.
 
-See `GITHUB_SETUP.md` for maintenance instructions. Never commit real patient data, credentials or identifiable health information.
+See `GITHUB_SETUP.md` for maintenance instructions and `DEPLOYMENT.md` for Streamlit Community Cloud deployment. The hosted URL is only assigned after you complete deployment in your authenticated Streamlit workspace. Never commit real patient data, credentials or identifiable health information.

@@ -19,8 +19,22 @@ from .evaluation import (
 )
 
 
-def run_experiment(n_patients: int = 400, seed: int = 42, epochs: int = 20) -> dict[str, Any]:
-    cohort = make_synthetic_cohort(n_patients=n_patients, seed=seed)
+def run_experiment(
+    n_patients: int = 400,
+    seed: int = 42,
+    epochs: int = 20,
+    cohort: pd.DataFrame | None = None,
+) -> dict[str, Any]:
+    """Run the progression workflow on generated or validated visit-level data.
+
+    The separate causal-effect example always uses a new synthetic dataset; it is
+    not estimated from a user-supplied progression cohort.
+    """
+    is_synthetic = cohort is None
+    if cohort is None:
+        cohort = make_synthetic_cohort(n_patients=n_patients, seed=seed)
+    else:
+        cohort = cohort.copy(deep=True)
     examples = create_forecast_examples(cohort)
     splits = split_by_patient(examples, seed=seed)
 
@@ -49,6 +63,7 @@ def run_experiment(n_patients: int = 400, seed: int = 42, epochs: int = 20) -> d
     _, causal = simulate_treatment_effect(seed=seed)
 
     return {
+        "data_mode": "synthetic" if is_synthetic else "uploaded_csv",
         "cohort": cohort,
         "examples": examples,
         "splits": splits,

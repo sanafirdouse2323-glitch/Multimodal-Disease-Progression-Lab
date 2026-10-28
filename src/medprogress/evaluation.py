@@ -286,22 +286,43 @@ def evaluate_missingness_stress(
 
 
 def subgroup_metrics(test: pd.DataFrame, predictions: np.ndarray, train: pd.DataFrame) -> pd.DataFrame:
-    """Report descriptive synthetic test metrics by sex and training-defined age group."""
+    """Report descriptive test metrics by available age/sex codes, if provided."""
     if len(predictions) != len(test):
         raise ValueError("Prediction count must match test rows")
-    threshold = float(train["age_scaled"].median())
+
+    age_train = pd.to_numeric(train["age_scaled"], errors="coerce")
+    age_test = pd.to_numeric(test["age_scaled"], errors="coerce")
+    sex_test = pd.to_numeric(test["sex_binary"], errors="coerce")
+    if age_train.notna().any():
+        threshold = float(age_train.median())
+        age_label = f"Age <= training median ({threshold * 100:.1f} years)"
+        age_label_high = f"Age > training median ({threshold * 100:.1f} years)"
+        age_low_mask = (age_test <= threshold).fillna(False).to_numpy(dtype=bool)
+        age_high_mask = (age_test > threshold).fillna(False).to_numpy(dtype=bool)
+    else:
+        age_label = "Age <= training median (unavailable)"
+        age_label_high = "Age > training median (unavailable)"
+        age_low_mask = np.zeros(len(test), dtype=bool)
+        age_high_mask = np.zeros(len(test), dtype=bool)
+
     groups = {
-        "Sex group 0": test["synthetic_sex"].to_numpy() == 0,
-        "Sex group 1": test["synthetic_sex"].to_numpy() == 1,
-        f"Age <= training median ({threshold * 100:.1f})": test["age_scaled"].to_numpy() <= threshold,
-        f"Age > training median ({threshold * 100:.1f})": test["age_scaled"].to_numpy() > threshold,
+        "Sex/code group 0": sex_test.eq(0).fillna(False).to_numpy(dtype=bool),
+        "Sex/code group 1": sex_test.eq(1).fillna(False).to_numpy(dtype=bool),
+        age_label: age_low_mask,
+        age_label_high: age_high_mask,
     }
     y_true = test[TARGET_COL].astype(int).to_numpy()
     rows = []
     for name, mask in groups.items():
         n = int(mask.sum())
         if n == 0:
-            rows.append({"subgroup": name, "n": 0, "accuracy": np.nan, "macro_f1": np.nan, "caution": "No test examples"})
+            rows.append({
+                "subgroup": name,
+                "n": 0,
+                "accuracy": np.nan,
+                "macro_f1": np.nan,
+                "caution": "No available test examples for this group",
+            })
             continue
         metrics = classification_metrics(y_true[mask], np.asarray(predictions)[mask])
         rows.append({
@@ -309,6 +330,6 @@ def subgroup_metrics(test: pd.DataFrame, predictions: np.ndarray, train: pd.Data
             "n": n,
             "accuracy": metrics["accuracy"],
             "macro_f1": metrics["macro_f1"],
-            "caution": "Small subgroup; descriptive only" if n < 30 else "Synthetic data; descriptive only",
+            "caution": "Small subgroup; descriptive only" if n < 30 else "Descriptive only; not evidence of fairness",
         })
     return pd.DataFrame(rows)

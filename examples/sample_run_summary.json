@@ -1,0 +1,40 @@
+{
+  "synthetic_only": true,
+  "settings": {"patients": 400, "epochs": 20, "seed": 42},
+  "software_versions": {
+    "python": "3.13.5",
+    "numpy": "2.3.5",
+    "pandas": "2.2.3",
+    "scikit-learn": "1.8.0",
+    "torch": "2.10.0+cpu"
+  },
+  "split_sizes": {
+    "train": {"patients": 240, "forecast_windows": 835},
+    "validation": {"patients": 80, "forecast_windows": 284},
+    "test": {"patients": 80, "forecast_windows": 274}
+  },
+  "benchmarks": [
+    {"model": "Logistic Regression", "feature_group": "Clinical + temporal/current stage", "accuracy": 0.8175182481751825, "macro_f1": 0.81076470154817, "n_test_examples": 274},
+    {"model": "Logistic Regression", "feature_group": "Imaging", "accuracy": 0.6824817518248175, "macro_f1": 0.6691789126123223, "n_test_examples": 274},
+    {"model": "Logistic Regression", "feature_group": "Multimodal fusion", "accuracy": 0.7846715328467153, "macro_f1": 0.7788913295145485, "n_test_examples": 274},
+    {"model": "Logistic Regression", "feature_group": "Wearables", "accuracy": 0.4562043795620438, "macro_f1": 0.44128627386081165, "n_test_examples": 274},
+    {"model": "Majority baseline (stage 2)", "feature_group": "Training majority class", "accuracy": 0.35766423357664234, "macro_f1": 0.13172043010752688, "n_test_examples": 274},
+    {"model": "Neural multimodal fusion", "feature_group": "Multimodal fusion", "accuracy": 0.7956204379562044, "macro_f1": 0.7813193446392641, "n_test_examples": 274},
+    {"model": "Persistence baseline", "feature_group": "Current stage only", "accuracy": 0.8175182481751825, "macro_f1": 0.81076470154817, "n_test_examples": 274},
+    {"model": "Random Forest", "feature_group": "Clinical + temporal/current stage", "accuracy": 0.8211678832116789, "macro_f1": 0.8135369532428356, "n_test_examples": 274},
+    {"model": "Random Forest", "feature_group": "Imaging", "accuracy": 0.6824817518248175, "macro_f1": 0.6671762935697072, "n_test_examples": 274},
+    {"model": "Random Forest", "feature_group": "Multimodal fusion", "accuracy": 0.8138686131386861, "macro_f1": 0.807149869624808, "n_test_examples": 274},
+    {"model": "Random Forest", "feature_group": "Wearables", "accuracy": 0.45985401459854014, "macro_f1": 0.4529546880334668, "n_test_examples": 274}
+  ],
+  "neural_metrics": {"accuracy": 0.7956204379562044, "macro_f1": 0.7813193446392641, "n_test_examples": 274},
+  "causal_simulation": {
+    "known_simulated_effect": -0.8,
+    "naive_difference": 0.23787139524899603,
+    "adjusted_regression": -0.8062013934962141,
+    "inverse_probability_weighting": -0.8054663728442878,
+    "propensity_min": 0.03,
+    "propensity_max": 0.9635605927274038,
+    "n": 5000
+  },
+  "disclaimer": "Synthetic research demonstration only; not clinical evidence."
+}

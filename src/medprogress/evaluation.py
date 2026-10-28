@@ -187,12 +187,14 @@ def train_neural_fusion(
     torch.set_num_threads(1)
 
     preprocessor = Preprocessor.fit(train[FEATURE_COLS].to_numpy(dtype=float))
-    x_train = preprocessor.transform(train[FEATURE_COLS].to_numpy(dtype=float))
-    x_val = preprocessor.transform(validation[FEATURE_COLS].to_numpy(dtype=float))
-    x_test = preprocessor.transform(test[FEATURE_COLS].to_numpy(dtype=float))
-    y_train = train[TARGET_COL].to_numpy(dtype=np.int64)
-    y_val = validation[TARGET_COL].to_numpy(dtype=np.int64)
-    y_test = test[TARGET_COL].to_numpy(dtype=np.int64)
+    # Explicit writable arrays avoid PyTorch warnings when a pandas-backed NumPy
+    # view is read-only on a particular pandas/NumPy version.
+    x_train = np.array(preprocessor.transform(train[FEATURE_COLS].to_numpy(dtype=float)), dtype=np.float32, copy=True)
+    x_val = np.array(preprocessor.transform(validation[FEATURE_COLS].to_numpy(dtype=float)), dtype=np.float32, copy=True)
+    x_test = np.array(preprocessor.transform(test[FEATURE_COLS].to_numpy(dtype=float)), dtype=np.float32, copy=True)
+    y_train = np.array(train[TARGET_COL].to_numpy(dtype=np.int64), dtype=np.int64, copy=True)
+    y_val = np.array(validation[TARGET_COL].to_numpy(dtype=np.int64), dtype=np.int64, copy=True)
+    y_test = np.array(test[TARGET_COL].to_numpy(dtype=np.int64), dtype=np.int64, copy=True)
 
     model = MultimodalFusionNet()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-4)

@@ -26,3 +26,16 @@ def test_dashboard_renders_and_full_experiment_action_completes():
     assert "Forecast examples" in metric_labels
     assert "Neural fusion macro-F1" in metric_labels
     assert len(app.tabs) == 6
+
+
+
+def test_empty_csv_template_mode_is_available():
+    app = AppTest.from_file(str(ROOT / "app.py"), default_timeout=120).run(timeout=30)
+    assert not app.exception, [exc.message for exc in app.exception]
+
+    app.radio[0].set_value("Empty CSV template")
+    app.run(timeout=30)
+
+    assert not app.exception, [exc.message for exc in app.exception]
+    assert any("Start with an empty data shell" in item.value for item in app.subheader)
+    assert any("Required columns" in item.value for item in app.markdown)

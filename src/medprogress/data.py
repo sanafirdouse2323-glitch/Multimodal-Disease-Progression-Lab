@@ -248,7 +248,7 @@ def prepare_uploaded_cohort(raw: pd.DataFrame) -> pd.DataFrame:
                 f"Column '{column}' must contain numeric values or blanks. "
                 f"Invalid example(s): {examples}"
             )
-        if np.isinf(numeric.to_numpy(dtype=float)).any():
+        if np.isinf(numeric.to_numpy(dtype=float, na_value=np.nan)).any():
             raise ValueError(f"Column '{column}' contains an infinite value. Replace it with a number or blank.")
         frame[column] = numeric
 

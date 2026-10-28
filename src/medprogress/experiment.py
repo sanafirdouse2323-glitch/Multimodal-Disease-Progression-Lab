@@ -1,0 +1,70 @@
+"""Orchestration for the reproducible end-to-end demonstration."""
+from __future__ import annotations
+
+from typing import Any
+import platform
+
+import numpy as np
+import pandas as pd
+import sklearn
+import torch
+
+from .causal import simulate_treatment_effect
+from .data import create_forecast_examples, make_synthetic_cohort, split_by_patient
+from .evaluation import (
+    benchmark_modalities,
+    evaluate_missingness_stress,
+    subgroup_metrics,
+    train_neural_fusion,
+)
+
+
+def run_experiment(n_patients: int = 400, seed: int = 42, epochs: int = 20) -> dict[str, Any]:
+    cohort = make_synthetic_cohort(n_patients=n_patients, seed=seed)
+    examples = create_forecast_examples(cohort)
+    splits = split_by_patient(examples, seed=seed)
+
+    rf_metrics, rf_predictions = benchmark_modalities(
+        splits.train, splits.test, kind="random_forest", seed=seed
+    )
+    lr_metrics, _ = benchmark_modalities(
+        splits.train, splits.test, kind="logistic_regression", seed=seed
+    )
+    benchmarks = pd.concat([rf_metrics, lr_metrics], ignore_index=True)
+
+    neural_metrics, neural_predictions, history = train_neural_fusion(
+        splits.train, splits.validation, splits.test, epochs=epochs, seed=seed
+    )
+    neural_row = pd.DataFrame([{
+        "model": "Neural multimodal fusion",
+        "feature_group": "Multimodal fusion",
+        "accuracy": neural_metrics["accuracy"],
+        "macro_f1": neural_metrics["macro_f1"],
+        "n_test_examples": neural_metrics["n_test_examples"],
+    }])
+    benchmarks = pd.concat([benchmarks, neural_row], ignore_index=True)
+
+    missingness = evaluate_missingness_stress(splits.train, splits.test, seed=seed)
+    fairness = subgroup_metrics(splits.test, neural_predictions, splits.train)
+    _, causal = simulate_treatment_effect(seed=seed)
+
+    return {
+        "cohort": cohort,
+        "examples": examples,
+        "splits": splits,
+        "benchmarks": benchmarks.sort_values(["model", "feature_group"]).reset_index(drop=True),
+        "random_forest_predictions": rf_predictions["Multimodal fusion"],
+        "neural_predictions": neural_predictions,
+        "neural_metrics": neural_metrics,
+        "training_history": history,
+        "missingness": missingness,
+        "fairness": fairness,
+        "causal": causal,
+        "software_versions": {
+            "python": platform.python_version(),
+            "numpy": np.__version__,
+            "pandas": pd.__version__,
+            "scikit-learn": sklearn.__version__,
+            "torch": torch.__version__,
+        },
+    }

@@ -132,6 +132,7 @@ def make_synthetic_cohort(
                 if stage == 3:
                     up_probability = 0.0
                 down_probability = 0.035 if stage > 0 else 0.0
+                up_probability = min(up_probability, 1.0 - down_probability)
                 draw = rng.random()
                 if draw < up_probability:
                     stage += 1

@@ -125,10 +125,18 @@ def make_synthetic_cohort(
                     # upward-transition risk. It is not included directly as a model feature.
                     log_odds = -2.0 + 0.75 * progression_trait + 0.30 * (stage >= 1)
                     up_probability = float(1.0 / (1.0 + np.exp(-log_odds)))
-                if rng.random() < up_probability:
-                    stage = min(3, stage + 1)
-                elif rng.random() < 0.035:
-                    stage = max(0, stage - 1)
+
+                # Sample mutually exclusive up / down / stable outcomes. Stage 3
+                # cannot progress upward; the downward probability does not depend
+                # on the hidden progression trait.
+                if stage == 3:
+                    up_probability = 0.0
+                down_probability = 0.035 if stage > 0 else 0.0
+                draw = rng.random()
+                if draw < up_probability:
+                    stage += 1
+                elif draw < up_probability + down_probability:
+                    stage -= 1
 
             severity = stage / 3.0
             image_values = rng.normal(

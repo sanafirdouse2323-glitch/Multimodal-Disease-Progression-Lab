@@ -50,3 +50,18 @@ def test_empty_csv_template_mode_is_available():
     assert not app.exception, [exc.message for exc in app.exception]
     assert any("Start with an empty data shell" in item.value for item in app.subheader)
     assert any("Required columns" in item.value for item in app.markdown)
+
+def test_synthetic_scenario_selector_renders_and_accepts_all_scenarios():
+    app = AppTest.from_file(str(ROOT / "app.py"), default_timeout=120).run(timeout=30)
+    assert not app.exception, [exc.message for exc in app.exception]
+    selectors = [box for box in app.selectbox if box.label == "Synthetic data scenario"]
+    assert len(selectors) == 1
+    assert set(selectors[0].options) == {
+        "Progression signal present",
+        "No additional progression signal",
+        "Difficult: weak signal and more missing data",
+    }
+
+    selectors[0].set_value("No additional progression signal")
+    app.run(timeout=30)
+    assert not app.exception, [exc.message for exc in app.exception]

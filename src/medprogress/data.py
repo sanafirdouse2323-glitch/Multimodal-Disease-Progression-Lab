@@ -63,10 +63,14 @@ def make_synthetic_cohort(
     wearable_missing_probability: float = 0.18,
     scenario: str = "progression_signal",
 ) -> pd.DataFrame:
-    """Create artificial patients with irregular visits and three data modalities.
+    """Create artificial longitudinal patients under a named simulation scenario.
 
-    Stage 0-3 is an invented ordinal label. Modalities are noisy signals driven by
-    stage and latent patient risk; they are not actual scans or clinical measurements.
+    Stage 0-3 is an invented ordinal label. The progression_signal scenario plants
+    a hidden patient-level tendency that affects upward transitions and appears
+    noisily in observed features; no_signal omits that link; difficult weakens the
+    feature signal, increases measurement noise, and raises modality missingness.
+    These are controlled simulation assumptions, not claims about real diseases.
+    The hidden progression tendency is never included as a model feature.
     """
     if n_patients < 30:
         raise ValueError("n_patients must be at least 30 for meaningful demo splits")

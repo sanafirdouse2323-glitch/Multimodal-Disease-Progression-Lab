@@ -26,6 +26,10 @@ def test_dashboard_renders_and_full_experiment_action_completes():
     assert "Forecast examples" in metric_labels
     assert "Neural fusion macro-F1" in metric_labels
     assert len(app.tabs) == 6
+    assert any(
+        "Does a model identify actual stage changes?" in item.value
+        for item in app.subheader
+    )
 
 
 

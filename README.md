@@ -49,7 +49,7 @@ Run a repeated-seed comparison across all three scenarios (this takes longer bec
 python scripts/evaluate_progression_scenarios.py --patients 400 --seeds 10 --epochs 5 --bootstrap-replicates 500
 ```
 
-The script writes per-run results to progression_scenario_runs.csv and aggregated scenario summaries to progression_scenario_summary.csv. It compares Random Forest, Logistic Regression and neural multimodal fusion with persistence, and computes paired patient-level bootstrap intervals for accuracy differences within each run. The seed-to-seed spread and bootstrap intervals are descriptive simulation diagnostics, not clinical confidence intervals.
+The script writes per-run results to progression_scenario_runs.csv and aggregated scenario summaries to progression_scenario_summary.csv. It compares Random Forest, Logistic Regression and neural multimodal fusion with persistence, reports exact accuracy on the subset of windows whose stage actually changes plus binary stage-change precision/recall/F1, and computes paired patient-level bootstrap intervals for overall accuracy differences within each run. The seed-to-seed spread and bootstrap intervals are descriptive simulation diagnostics, not clinical confidence intervals. The dashboard also shows these transition-specific metrics so high overall accuracy cannot conceal poor performance on changed-stage cases.
 
 ## Evaluation cautions
 

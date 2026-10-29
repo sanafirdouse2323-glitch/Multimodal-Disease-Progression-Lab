@@ -344,6 +344,46 @@ with progression_tab:
         title="Held-out macro-F1 (higher is better; compare the same target)"
     )
     st.plotly_chart(fig, use_container_width=True)
+
+    actual_stage = splits.test["target_stage"].astype(int).to_numpy()
+    current_stage = splits.test["current_stage"].astype(int).to_numpy()
+    actual_change = actual_stage != current_stage
+    n_actual_changes = int(actual_change.sum())
+    transition_predictions = {
+        "Persistence baseline": current_stage,
+        "Random Forest (multimodal)": result["random_forest_predictions"],
+        "Logistic Regression (multimodal)": result["logistic_regression_predictions"],
+        "Neural multimodal fusion": result["neural_predictions"],
+    }
+    transition_rows = []
+    for model_name, raw_prediction in transition_predictions.items():
+        prediction = pd.Series(raw_prediction).to_numpy(dtype=int)
+        predicted_change = prediction != current_stage
+        true_positive = int((actual_change & predicted_change).sum())
+        false_positive = int((~actual_change & predicted_change).sum())
+        false_negative = int((actual_change & ~predicted_change).sum())
+        precision = true_positive / (true_positive + false_positive) if true_positive + false_positive else 0.0
+        recall = true_positive / (true_positive + false_negative) if true_positive + false_negative else 0.0
+        change_f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
+        exact_changed_accuracy = (
+            float((prediction[actual_change] == actual_stage[actual_change]).mean())
+            if n_actual_changes else float("nan")
+        )
+        transition_rows.append({
+            "model": model_name,
+            "actual stage-change windows": n_actual_changes,
+            "exact next-stage accuracy on changed windows": exact_changed_accuracy,
+            "change-detection precision": precision,
+            "change-detection recall": recall,
+            "change-detection F1": change_f1,
+        })
+    st.subheader("Does a model identify actual stage changes?")
+    st.caption(
+        "Overall accuracy can look high when most stages remain unchanged. This table also reports exact next-stage "
+        "accuracy only among windows where a change actually occurred, plus precision/recall for detecting any change. "
+        "These are descriptive synthetic or uploaded-data results, not clinical validation."
+    )
+    st.dataframe(pd.DataFrame(transition_rows), use_container_width=True, hide_index=True)
     history = result["training_history"]
     if not history.empty:
         hfig = go.Figure()

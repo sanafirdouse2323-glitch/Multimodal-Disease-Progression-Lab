@@ -73,7 +73,7 @@ def test_csv_reader_preserves_numeric_like_patient_ids():
     raw = read_uploaded_csv(("\n".join(lines) + "\n").encode("utf-8"))
     cohort = prepare_uploaded_cohort(raw)
 
-    assert raw["patient_id"].iloc[0] == "001"
+    assert raw[" patient_id "].iloc[0] == "001"
     assert cohort["patient_id"].nunique() == 10
     assert {"001", "1"}.issubset(set(cohort["patient_id"]))
 

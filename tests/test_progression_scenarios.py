@@ -19,30 +19,6 @@ from medprogress.data import (
 )
 
 
-def _transition_auc(examples: pd.DataFrame, use_measurements: bool) -> float:
-    """Score whether current-visit measurements indicate an upward next-stage transition."""
-    def matrix(frame: pd.DataFrame, add_measurements: bool) -> np.ndarray:
-        stage = frame["current_stage"].astype(int).to_numpy()
-        columns = [np.eye(4, dtype=float)[stage]]
-        if add_measurements:
-            # Aggregate the generated modalities so the test checks for signal in
-            # measurements, not a special hand-coded latent-risk feature.
-            measurements = np.column_stack([
-                frame[IMAGE_COLS].mean(axis=1).to_numpy(),
-                frame[WEARABLE_COLS].mean(axis=1).to_numpy(),
-                frame["lab_a"].to_numpy(dtype=float),
-                frame["lab_b"].to_numpy(dtype=float),
-            ])
-            columns.append(measurements)
-        return np.column_stack(columns)
-
-    # The helper receives only a single split and evaluates on patients held out
-    # by split_by_patient; no participant appears in both training and test data.
-    train_mask = examples.attrs.get("_unused", None)
-    del train_mask  # Avoid attaching transient split metadata to the forecast frame.
-    raise RuntimeError("_transition_auc must be called with train/test frames")
-
-
 def _auc_for_split(train: pd.DataFrame, test: pd.DataFrame, use_measurements: bool) -> float:
     def matrix(frame: pd.DataFrame) -> np.ndarray:
         stage = frame["current_stage"].astype(int).to_numpy()

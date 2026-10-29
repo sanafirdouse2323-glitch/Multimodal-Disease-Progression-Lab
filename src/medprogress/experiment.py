@@ -55,7 +55,7 @@ def run_experiment(
     rf_metrics, rf_predictions = benchmark_modalities(
         splits.train, splits.test, kind="random_forest", seed=seed
     )
-    lr_metrics, _ = benchmark_modalities(
+    lr_metrics, lr_predictions = benchmark_modalities(
         splits.train, splits.test, kind="logistic_regression", seed=seed
     )
     benchmarks = pd.concat([rf_metrics, lr_metrics], ignore_index=True)
@@ -84,6 +84,7 @@ def run_experiment(
         "splits": splits,
         "benchmarks": benchmarks.sort_values(["model", "feature_group"]).reset_index(drop=True),
         "random_forest_predictions": rf_predictions["Multimodal fusion"],
+        "logistic_regression_predictions": lr_predictions["Multimodal fusion"],
         "neural_predictions": neural_predictions,
         "neural_metrics": neural_metrics,
         "training_history": history,

@@ -208,8 +208,13 @@ def empty_upload_template() -> pd.DataFrame:
 
 
 def read_uploaded_csv(upload_bytes: bytes) -> pd.DataFrame:
-    """Read a user-uploaded CSV while preserving participant IDs as strings."""
-    return pd.read_csv(io.BytesIO(upload_bytes), dtype={"patient_id": "string"})
+    """Read CSV fields as text before validating and converting numerical columns.
+
+    Reading fields as text prevents numeric-looking participant IDs (such as
+    "001") from being inferred as numbers. The cohort validator converts the
+    documented numeric columns after header normalization.
+    """
+    return pd.read_csv(io.BytesIO(upload_bytes), dtype=str)
 
 
 def prepare_uploaded_cohort(raw: pd.DataFrame) -> pd.DataFrame:

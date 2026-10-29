@@ -64,7 +64,8 @@ def test_uploaded_csv_is_normalized_into_model_schema():
 
 def test_csv_reader_preserves_numeric_like_patient_ids():
     patient_ids = ["001", "1", *[f"{number:03d}" for number in range(2, 10)]]
-    lines = ["patient_id,time_months,current_stage"]
+    # Header whitespace is normalized by the validator; IDs must stay text meanwhile.
+    lines = [" patient_id ,time_months,current_stage"]
     for patient_id in patient_ids:
         lines.append(f"{patient_id},0,0")
         lines.append(f"{patient_id},6,1")

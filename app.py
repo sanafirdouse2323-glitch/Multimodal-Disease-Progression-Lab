@@ -59,6 +59,13 @@ Example only: a participant has stage code **1** at month **6**, then stage code
 - **Clinical and visit information:** age, an optional numeric group code, two generic measurement fields, current stage and time between visits.
 In synthetic mode, these values are simulated. For uploads, the imaging and wearable columns must already contain computed numerical features.
 
+### Try the three synthetic scenarios
+- **Progression signal present:** a hidden, stable patient-level progression tendency affects future upward transitions and is reflected imperfectly in the generated measurements.
+- **No additional progression signal:** future transitions follow stage-dependent random rules, without a patient-specific progression tendency reflected in the measurements.
+- **Difficult:** the progression tendency is harder to measure because feature signals are weaker, measurement noise is larger, and whole imaging/wearable modalities are missing more often.
+
+These are controlled teaching scenarios, not medically validated disease mechanisms. The signal scenario tests whether models can recover a deliberately planted synthetic relationship; it does not show that the same relationship exists in real patients. Always compare with the persistence baseline.
+
 ### What do the six result tabs show?
 1. **Progression models:** compares predictions with next-visit labels for held-out patients, alongside simpler reference methods.
 2. **Modality comparison:** compares each feature group with the combined feature groups.
@@ -89,6 +96,23 @@ with st.sidebar:
         index=0,
         key="data_source_mode",
     )
+    synthetic_scenario = "progression_signal"
+    if data_source == "Synthetic demo":
+        scenario_labels = {
+            "Progression signal present": "progression_signal",
+            "No additional progression signal": "no_signal",
+            "Difficult: weak signal and more missing data": "difficult",
+        }
+        selected_scenario_label = st.selectbox(
+            "Synthetic data scenario",
+            options=list(scenario_labels),
+            index=0,
+            help=(
+                "These are artificial test conditions. The progression-signal scenario deliberately plants "
+                "a noisy relationship for benchmarking; it is not a medical claim."
+            ),
+        )
+        synthetic_scenario = scenario_labels[selected_scenario_label]
     uploaded_file = None
     if data_source == "Upload CSV":
         st.warning(
@@ -111,7 +135,7 @@ if data_source == "Upload CSV" and uploaded_file is not None:
         upload_error = f"{type(exc).__name__}: {exc}"
 
 if data_source == "Synthetic demo":
-    current_input_key = "synthetic-demo"
+    current_input_key = f"synthetic-demo:{synthetic_scenario}"
 elif data_source == "Empty CSV template":
     current_input_key = "empty-csv-template"
 else:
@@ -227,7 +251,8 @@ if run_clicked:
         try:
             if data_source == "Synthetic demo":
                 experiment_result = run_experiment(
-                    n_patients=int(patient_count), seed=int(seed), epochs=int(epochs)
+                    n_patients=int(patient_count), seed=int(seed), epochs=int(epochs),
+                    scenario=synthetic_scenario,
                 )
             else:
                 experiment_result = run_experiment(
@@ -239,6 +264,7 @@ if run_clicked:
                 "patient_count": int(experiment_result["cohort"]["patient_id"].nunique()),
                 "seed": int(seed),
                 "neural_epochs": int(epochs),
+                "synthetic_scenario": experiment_result.get("synthetic_scenario"),
             }
         except ValueError as exc:
             st.error(str(exc))
@@ -277,8 +303,12 @@ c1.metric("Synthetic patients" if result.get("data_mode") == "synthetic" else "U
 c2.metric("Forecast examples", f"{len(result['examples']):,}")
 c3.metric("Held-out test windows", f"{len(splits.test):,}")
 c4.metric("Neural fusion macro-F1", f"{result['neural_metrics']['macro_f1']:.3f}")
+scenario_caption = (
+    f" · Synthetic scenario: {settings.get('synthetic_scenario')}"
+    if result.get("data_mode") == "synthetic" else ""
+)
 st.caption(
-    f"Data mode: {settings.get('data_mode', 'Synthetic demo')} · Seed {settings.get('seed', seed)} · "
+    f"Data mode: {settings.get('data_mode', 'Synthetic demo')}{scenario_caption} · Seed {settings.get('seed', seed)} · "
     f"{settings.get('neural_epochs', epochs)} neural epochs · patient-level split "
     "(60% train / 20% validation / 20% test)."
 )

@@ -121,6 +121,8 @@ def run(args: argparse.Namespace) -> tuple[pd.DataFrame, pd.DataFrame]:
                 "multimodal": "Multimodal fusion",
             }
 
+            actual_change = truth != persistence
+            n_actual_changes = int(actual_change.sum())
             for model_name, predictions in model_predictions.items():
                 accuracy = float(accuracy_score(truth, predictions))
                 if model_name == "Neural multimodal fusion":
@@ -133,6 +135,26 @@ def run(args: argparse.Namespace) -> tuple[pd.DataFrame, pd.DataFrame]:
                     matching = matching[matching["feature_group"] == group_name]
                     macro_f1 = float(matching.iloc[0]["macro_f1"])
 
+                predicted_change = predictions != persistence
+                true_positive = int((actual_change & predicted_change).sum())
+                false_positive = int((~actual_change & predicted_change).sum())
+                false_negative = int((actual_change & ~predicted_change).sum())
+                change_precision = (
+                    true_positive / (true_positive + false_positive)
+                    if true_positive + false_positive else 0.0
+                )
+                change_recall = (
+                    true_positive / (true_positive + false_negative)
+                    if true_positive + false_negative else 0.0
+                )
+                change_f1 = (
+                    2 * change_precision * change_recall / (change_precision + change_recall)
+                    if change_precision + change_recall else 0.0
+                )
+                exact_changed_accuracy = (
+                    float((predictions[actual_change] == truth[actual_change]).mean())
+                    if n_actual_changes else float("nan")
+                )
                 delta = accuracy - persistence_accuracy
                 ci_low, ci_high = patient_bootstrap_accuracy_delta(
                     splits.test,
@@ -150,6 +172,11 @@ def run(args: argparse.Namespace) -> tuple[pd.DataFrame, pd.DataFrame]:
                     "model": model_name,
                     "accuracy": accuracy,
                     "macro_f1": macro_f1,
+                    "actual_change_test_windows": n_actual_changes,
+                    "exact_next_stage_accuracy_on_changed_windows": exact_changed_accuracy,
+                    "change_detection_precision": float(change_precision),
+                    "change_detection_recall": float(change_recall),
+                    "change_detection_f1": float(change_f1),
                     "persistence_accuracy": persistence_accuracy,
                     "accuracy_delta_vs_persistence": delta,
                     "patient_bootstrap_95ci_delta_low": ci_low,
@@ -165,6 +192,11 @@ def run(args: argparse.Namespace) -> tuple[pd.DataFrame, pd.DataFrame]:
             mean_accuracy=("accuracy", "mean"),
             sd_accuracy_across_seeds=("accuracy", "std"),
             mean_macro_f1=("macro_f1", "mean"),
+            mean_exact_changed_stage_accuracy=("exact_next_stage_accuracy_on_changed_windows", "mean"),
+            mean_change_detection_precision=("change_detection_precision", "mean"),
+            mean_change_detection_recall=("change_detection_recall", "mean"),
+            mean_change_detection_f1=("change_detection_f1", "mean"),
+            mean_actual_change_test_windows=("actual_change_test_windows", "mean"),
             mean_persistence_accuracy=("persistence_accuracy", "mean"),
             mean_accuracy_delta_vs_persistence=("accuracy_delta_vs_persistence", "mean"),
             fraction_seed_runs_beating_persistence=("accuracy_delta_vs_persistence", lambda x: float((x > 0).mean())),

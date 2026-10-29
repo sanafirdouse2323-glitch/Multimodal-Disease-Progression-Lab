@@ -58,22 +58,32 @@ def test_synthetic_scenarios_are_named_reproducible_and_valid():
         assert set(examples[TARGET_COL].unique()).issubset({0, 1, 2, 3})
 
 
-def test_progression_signal_scenario_places_recoverable_signal_in_measurements():
+def test_planted_signal_is_more_learnable_than_the_negative_control():
     # This is a generator sanity check, not a claim about real medical data.
-    # Using several thousand synthetic patients makes the test less sensitive to
-    # chance variation while keeping patients disjoint across the evaluation split.
-    cohort = make_synthetic_cohort(
-        n_patients=1800, seed=731, scenario="progression_signal"
-    )
-    examples = create_forecast_examples(cohort)
-    splits = split_by_patient(examples, seed=731)
+    # Patients are split before fitting; each test patient is absent from training.
+    auc_gains = {}
+    for scenario in ("no_signal", "progression_signal"):
+        cohort = make_synthetic_cohort(
+            n_patients=1800, seed=731, scenario=scenario
+        )
+        examples = create_forecast_examples(cohort)
+        splits = split_by_patient(examples, seed=731)
+        stage_only_auc = _auc_for_split(splits.train, splits.test, use_measurements=False)
+        multimodal_auc = _auc_for_split(splits.train, splits.test, use_measurements=True)
 
-    stage_only_auc = _auc_for_split(splits.train, splits.test, use_measurements=False)
-    multimodal_auc = _auc_for_split(splits.train, splits.test, use_measurements=True)
+        assert np.isfinite(stage_only_auc)
+        assert np.isfinite(multimodal_auc)
+        auc_gains[scenario] = multimodal_auc - stage_only_auc
 
-    assert np.isfinite(stage_only_auc)
-    assert np.isfinite(multimodal_auc)
-    assert multimodal_auc > stage_only_auc + 0.03
+    # The assertion compares the signal scenario with the negative control; it
+    # does not require every model to beat persistence on every random seed.
+    assert auc_gains["progression_signal"] > auc_gains["no_signal"] + 0.03
+
+
+def test_difficult_scenario_increases_modality_missingness():
+    cohort = make_synthetic_cohort(n_patients=100, seed=43, scenario="difficult")
+    assert cohort["image_missing"].mean() > 0.20
+    assert cohort["wearable_missing"].mean() > 0.25
 
 
 def test_unknown_synthetic_scenario_is_rejected():

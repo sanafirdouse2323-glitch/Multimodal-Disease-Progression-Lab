@@ -1,10 +1,12 @@
-"""Synthetic longitudinal cohort generation and patient-level splitting.
+"""Synthetic cohort generation, uploaded-cohort validation, and patient-level splitting.
 
-All records generated here are artificial and must not be interpreted as clinical data.
+Records created by the synthetic generator are artificial and must not be interpreted
+as clinical data.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
+import io
 
 import numpy as np
 import pandas as pd
@@ -171,7 +173,10 @@ def create_forecast_examples(cohort: pd.DataFrame) -> pd.DataFrame:
     if not output:
         raise ValueError("No forecast examples could be created")
     examples = pd.DataFrame(output)
-    examples.attrs["synthetic_only"] = True
+    # Carry known provenance forward instead of labelling every cohort synthetic.
+    for key in ("synthetic_only", "data_source"):
+        if key in cohort.attrs:
+            examples.attrs[key] = cohort.attrs[key]
     return examples
 
 
@@ -200,6 +205,16 @@ def split_by_patient(examples: pd.DataFrame, seed: int = 42) -> DataSplits:
 def empty_upload_template() -> pd.DataFrame:
     """Return a header-only CSV template for user-supplied visit-level features."""
     return pd.DataFrame(columns=UPLOAD_TEMPLATE_COLUMNS)
+
+
+def read_uploaded_csv(upload_bytes: bytes) -> pd.DataFrame:
+    """Read CSV fields as text before validating and converting numerical columns.
+
+    Reading fields as text prevents numeric-looking participant IDs (such as
+    "001") from being inferred as numbers. The cohort validator converts the
+    documented numeric columns after header normalization.
+    """
+    return pd.read_csv(io.BytesIO(upload_bytes), dtype=str)
 
 
 def prepare_uploaded_cohort(raw: pd.DataFrame) -> pd.DataFrame:

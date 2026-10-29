@@ -31,7 +31,7 @@ streamlit run app.py
 
 For an initial live check, open the public app, choose 120 synthetic patients and 5 neural epochs, click **Run full experiment**, and confirm the six tabs, benchmark table, missingness chart, causal estimates, subgroup metrics, and CSV/JSON downloads.
 
-All data are synthetic. The app is an educational research demonstration, not a clinical tool. Never commit patient records, credentials, or identifiable health information.
+The built-in cohort and causal-effect tab use synthetic data. When a CSV is uploaded, progression modelling, modality comparisons, missing-modality stress tests, and subgroup metrics use the uploaded feature-level table; the causal-effect tab remains a separate synthetic simulation. This is an educational research demonstration, not a clinical tool. Never commit patient records, credentials, or identifiable health information.
 
 
 ## CSV upload and empty template

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import hashlib
-import io
 import json
 import sys
 from pathlib import Path
@@ -21,6 +20,7 @@ from medprogress.data import (  # noqa: E402
     WEARABLE_COLS,
     empty_upload_template,
     prepare_uploaded_cohort,
+    read_uploaded_csv,
 )
 from medprogress.experiment import run_experiment  # noqa: E402
 
@@ -62,7 +62,7 @@ if data_source == "Upload CSV" and uploaded_file is not None:
     upload_bytes = uploaded_file.getvalue()
     uploaded_signature = hashlib.sha256(upload_bytes).hexdigest()
     try:
-        raw_uploaded_frame = pd.read_csv(io.BytesIO(upload_bytes))
+        raw_uploaded_frame = read_uploaded_csv(upload_bytes)
         uploaded_cohort = prepare_uploaded_cohort(raw_uploaded_frame)
     except Exception as exc:
         upload_error = f"{type(exc).__name__}: {exc}"
@@ -197,6 +197,8 @@ if run_clicked:
                 "seed": int(seed),
                 "neural_epochs": int(epochs),
             }
+        except ValueError as exc:
+            st.error(str(exc))
         except Exception as exc:
             st.error(f"Experiment failed: {type(exc).__name__}: {exc}")
             st.exception(exc)

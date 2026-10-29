@@ -12,7 +12,9 @@ Format validation only checks whether the table can be parsed and passed to this
 
 ## One row per visit
 
-Each row represents one visit for one participant. A participant must have at least two visits. Use the same non-identifying study code for the same participant across visits. The app needs at least 10 unique participants to create its train/validation/test split; cohorts under 30 participants are flagged as especially small. Larger, justified samples are normally needed for stable research estimates.
+Each row represents one visit for one participant. A participant must have at least two visits. Use the same non-identifying study code for the same participant across visits. The CSV reader preserves `patient_id` as text, so codes such as `001` and `1` remain distinct. The app needs at least 10 unique participants to create its train/validation/test split; cohorts under 30 participants are flagged as especially small. Larger, justified samples are normally needed for stable research estimates.
+
+At least two different next-visit stage classes must be present in the training partition for the classifiers to run. A CSV may pass structural checks but stop at experiment time if the split contains only one target class. Small or rare stage groups can also make results unstable.
 
 ## Columns
 

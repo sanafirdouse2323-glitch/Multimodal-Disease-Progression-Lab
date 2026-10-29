@@ -34,9 +34,9 @@ After checking `git status` and running tests, commit and push only intended fil
 ```bash
 git status --short
 PYTHONPATH=src python -m pytest -q
-git add README.md GITHUB_SETUP.md app.py src tests scripts requirements.txt .github .gitignore examples
+git add README.md GITHUB_SETUP.md DEPLOYMENT.md UPLOAD_DATA_GUIDE.md app.py src tests scripts requirements.txt .github .gitignore examples templates
 git commit -m "Describe the verified change"
 git push
 ```
 
-Never commit real patient data, credentials, environment files, or model artifacts containing private data. This demonstration uses synthetic data only and is not a clinical tool.
+Never commit real patient data, credentials, environment files, or model artifacts containing private data. The built-in cohort and causal-effect demonstration use synthetic data; the app also accepts user-supplied feature-level CSV data. The project is not a clinical tool.

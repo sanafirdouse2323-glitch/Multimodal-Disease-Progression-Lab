@@ -10,7 +10,7 @@ import sklearn
 import torch
 
 from .causal import simulate_treatment_effect
-from .data import create_forecast_examples, make_synthetic_cohort, split_by_patient
+from .data import TARGET_COL, create_forecast_examples, make_synthetic_cohort, split_by_patient
 from .evaluation import (
     benchmark_modalities,
     evaluate_missingness_stress,
@@ -37,6 +37,19 @@ def run_experiment(
         cohort = cohort.copy(deep=True)
     examples = create_forecast_examples(cohort)
     splits = split_by_patient(examples, seed=seed)
+
+    training_classes = set(splits.train[TARGET_COL].astype(int).unique())
+    if len(training_classes) < 2:
+        class_description = (
+            ", ".join(str(value) for value in sorted(training_classes))
+            if training_classes else "none"
+        )
+        raise ValueError(
+            "The training partition contains only one next-visit stage class "
+            f"({class_description}). The classifiers need at least two target classes. "
+            "Use more participants and follow-up records with different next-visit stages, "
+            "and verify the stage-label mapping before rerunning."
+        )
 
     rf_metrics, rf_predictions = benchmark_modalities(
         splits.train, splits.test, kind="random_forest", seed=seed

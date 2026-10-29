@@ -25,6 +25,7 @@ def test_synthetic_cohort_has_irregular_visits_and_modalities():
 def test_forecast_target_is_next_visit_and_schema_has_22_features():
     cohort = make_synthetic_cohort(40, seed=8)
     examples = create_forecast_examples(cohort)
+    assert examples.attrs["synthetic_only"] is True
     assert len(FEATURE_COLS) == 22
     row = examples.iloc[0]
     patient_visits = cohort[cohort.patient_id == row.patient_id].sort_values("time_months")

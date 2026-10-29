@@ -6,8 +6,10 @@ from medprogress.data import (
     IMAGE_COLS,
     UPLOAD_TEMPLATE_COLUMNS,
     WEARABLE_COLS,
+    create_forecast_examples,
     empty_upload_template,
     prepare_uploaded_cohort,
+    read_uploaded_csv,
 )
 from medprogress.experiment import run_experiment
 
@@ -55,6 +57,24 @@ def test_uploaded_csv_is_normalized_into_model_schema():
     assert selected["visit_gap_scaled"] == pytest.approx(0.5)
     assert selected["current_stage_scaled"] == pytest.approx(selected["current_stage"] / 3.0)
     assert cohort.attrs["synthetic_only"] is False
+    examples = create_forecast_examples(cohort)
+    assert examples.attrs["synthetic_only"] is False
+    assert examples.attrs["data_source"] == "uploaded_csv"
+
+
+def test_csv_reader_preserves_numeric_like_patient_ids():
+    patient_ids = ["001", "1", *[f"{number:03d}" for number in range(2, 10)]]
+    lines = ["patient_id,time_months,current_stage"]
+    for patient_id in patient_ids:
+        lines.append(f"{patient_id},0,0")
+        lines.append(f"{patient_id},6,1")
+
+    raw = read_uploaded_csv(("\n".join(lines) + "\n").encode("utf-8"))
+    cohort = prepare_uploaded_cohort(raw)
+
+    assert raw["patient_id"].iloc[0] == "001"
+    assert cohort["patient_id"].nunique() == 10
+    assert {"001", "1"}.issubset(set(cohort["patient_id"]))
 
 
 def test_optional_feature_columns_can_be_omitted():
@@ -85,6 +105,15 @@ def test_upload_rejects_patients_without_a_follow_up_visit():
     raw = raw[~((raw["patient_id"] == "SUBJECT_000") & (raw["time_months"] != 0))]
     with pytest.raises(ValueError, match="at least two visits"):
         prepare_uploaded_cohort(raw)
+
+
+def test_experiment_rejects_a_single_target_class_with_a_clear_message():
+    raw = _valid_upload_frame()
+    raw["current_stage"] = 0
+    cohort = prepare_uploaded_cohort(raw)
+
+    with pytest.raises(ValueError, match="training partition contains only one next-visit stage class"):
+        run_experiment(seed=7, epochs=1, cohort=cohort)
 
 
 def test_uploaded_cohort_runs_through_experiment_pipeline():

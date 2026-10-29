@@ -38,6 +38,49 @@ st.markdown(
     "Raw medical images and raw wearable sensor files are not accepted."
 )
 
+with st.expander("Start here: how this demo works", expanded=True):
+    st.markdown(
+        """
+### What is this page?
+This is an interactive demonstration of a machine-learning workflow. It uses information from one patient visit to estimate the stage label at that person's next recorded visit. The default mode uses computer-generated example data, not real patient records.
+
+### Run your first experiment
+1. Leave **Synthetic demo** selected in the left-hand **Data source** menu.
+2. Keep the default settings for your first run.
+3. Click **Run full experiment** in the left sidebar.
+4. When the run finishes, explore the six results tabs below. You do not need to upload a file to try the demo.
+
+### What does “next visit” mean?
+Example only: a participant has stage code **1** at month **6**, then stage code **2** at month **12**. For the month-6 row, the target is the stage recorded at the next visit—code **2**. This is a next-recorded-visit prediction, not a promise about what will happen at a fixed 6- or 12-month date. Codes 0–3 are only labels; their medical meaning depends on how a data owner defines them. This example is not a real patient record.
+
+### What information does it use?
+- **Imaging-related features:** numbers in img_0 to img_7. This app does not read or analyse MRI or X-ray files.
+- **Wearable-style features:** numbers in wear_0 to wear_5. Raw sensor streams are not processed by this app.
+- **Clinical and visit information:** age, an optional numeric group code, two generic measurement fields, current stage and time between visits.
+In synthetic mode, these values are simulated. For uploads, the imaging and wearable columns must already contain computed numerical features.
+
+### What do the six result tabs show?
+1. **Progression models:** compares predictions with next-visit labels for held-out patients, alongside simpler reference methods.
+2. **Modality comparison:** compares each feature group with the combined feature groups.
+3. **Missing data:** hides some feature groups during testing as a controlled stress test; this does not prove robustness to every real-world missing-data pattern.
+4. **Causal simulation:** illustrates treatment-effect estimates on a separate synthetic dataset. It does not estimate treatment effects from an uploaded progression CSV.
+5. **Subgroup evaluation:** shows descriptive scores for available age and numeric group codes. These alone do not prove fairness.
+6. **Data and exports:** previews the data and train/validation/test splits, and provides CSV and JSON downloads.
+
+### How to understand the scores
+**Accuracy** is the fraction of held-out predictions that are correct. **Macro-F1** summarises performance across stage labels while giving each label equal weight. Both range from 0 to 1, where higher is better for the same evaluation task. Compare models on the same data and test split, and check whether a complex model actually beats the simpler baselines. A score from simulated data is not evidence of clinical accuracy.
+
+### Can I use my own data?
+1. Choose **Empty CSV template** in the left menu and download the blank file. Fill it in on your computer; it is not an editable spreadsheet inside this website.
+2. Use one row per visit and the same non-identifying study code for each participant across visits. Fill in time_months and current_stage (integer label 0, 1, 2 or 3). Map your stage definitions before upload.
+3. Each participant needs at least two visits and at least 10 different participant codes are needed for splitting. Ten is a technical minimum, not a sample-size recommendation. The training data must also contain at least two different next-visit stage labels.
+4. Optional fields include age_years, sex_binary, lab_a, lab_b, img_0 to img_7 and wear_0 to wear_5. The img and wear columns need precomputed numbers, not pictures or raw streams.
+5. Select **Upload CSV**, choose your completed file, read the validation message and preview, then click **Run full experiment**.
+
+The app checks file structure, not whether your dataset is scientifically suitable. This public website receives uploaded files, so do not upload identifiable, confidential or unauthorised data. Use an approved secure environment for sensitive research. This prototype is not a diagnostic tool and does not recommend treatment.
+        """
+    )
+
 with st.sidebar:
     st.header("Data source")
     data_source = st.radio(

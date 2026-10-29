@@ -100,13 +100,25 @@ def run(args: argparse.Namespace) -> tuple[pd.DataFrame, pd.DataFrame]:
             )
 
             model_predictions = {
+                "Random Forest (imaging only)": rf_predictions["Imaging"],
+                "Random Forest (wearables only)": rf_predictions["Wearables"],
+                "Random Forest (clinical/current stage)": rf_predictions["Clinical + temporal/current stage"],
                 "Random Forest (multimodal)": rf_predictions["Multimodal fusion"],
+                "Logistic Regression (imaging only)": lr_predictions["Imaging"],
+                "Logistic Regression (wearables only)": lr_predictions["Wearables"],
+                "Logistic Regression (clinical/current stage)": lr_predictions["Clinical + temporal/current stage"],
                 "Logistic Regression (multimodal)": lr_predictions["Multimodal fusion"],
                 "Neural multimodal fusion": neural_predictions,
             }
             metric_frames = {
-                "Random Forest (multimodal)": rf_metrics,
-                "Logistic Regression (multimodal)": lr_metrics,
+                "Random Forest": rf_metrics,
+                "Logistic Regression": lr_metrics,
+            }
+            feature_group_for_model = {
+                "imaging only": "Imaging",
+                "wearables only": "Wearables",
+                "clinical/current stage": "Clinical + temporal/current stage",
+                "multimodal": "Multimodal fusion",
             }
 
             for model_name, predictions in model_predictions.items():
@@ -114,10 +126,11 @@ def run(args: argparse.Namespace) -> tuple[pd.DataFrame, pd.DataFrame]:
                 if model_name == "Neural multimodal fusion":
                     macro_f1 = float(neural_metrics["macro_f1"])
                 else:
-                    matching = metric_frames[model_name]
-                    matching = matching[
-                        (matching["feature_group"] == "Multimodal fusion")
-                    ]
+                    estimator_name = model_name.split(" (", maxsplit=1)[0]
+                    suffix = model_name.split(" (", maxsplit=1)[1].rstrip(")")
+                    group_name = feature_group_for_model[suffix]
+                    matching = metric_frames[estimator_name]
+                    matching = matching[matching["feature_group"] == group_name]
                     macro_f1 = float(matching.iloc[0]["macro_f1"])
 
                 delta = accuracy - persistence_accuracy

@@ -399,7 +399,7 @@ c1, c2, c3, c4 = st.columns(4)
 c1.metric("People in this example", f"{len(result['cohort']['patient_id'].unique()):,}")
 c2.metric("Visit-to-visit examples", f"{len(result['examples']):,}")
 c3.metric("Examples checked", f"{len(splits.test):,}")
-c4.metric("Balanced model score", f"{result['neural_metrics']['macro_f1']:.3f}")
+c4.metric("Neural model score", f"{result['neural_metrics']['macro_f1'] * 100:.0f}%")
 scenario_caption = (
     f" · Sample pattern: {settings.get('synthetic_scenario')}"
     if result.get("data_mode") == "synthetic" else ""

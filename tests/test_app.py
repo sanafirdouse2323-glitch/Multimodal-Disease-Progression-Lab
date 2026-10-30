@@ -44,7 +44,7 @@ def test_beginner_friendly_homepage_explains_data_sources_and_whole_numbers():
     rendered_text = "\\n".join(
         [item.value for item in app.markdown]
         + [item.label for item in app.radio]
-        + [item.label for item in app.caption]
+        + [item.value for item in app.caption]
     )
     assert "Experiment settings" in rendered_text or any(
         "Experiment settings" in item.value for item in app.subheader

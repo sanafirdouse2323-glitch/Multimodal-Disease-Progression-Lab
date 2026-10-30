@@ -103,9 +103,9 @@ The causal-effect tab is different: it always uses a separate synthetic treatmen
 ## How to use the detailed CSV option
 
 1. Choose **Upload a spreadsheet** in the centre of the homepage.
-2. Select **Download the detailed CSV template** if you need to see all supported column names.
+2. Select **Download empty CSV template** in the centre panel to get the supported column names.
 3. Prepare one row per participant visit, using the detailed required and optional columns above.
-4. Choose the completed CSV file and read the validation message and preview.
+4. Choose your completed CSV file and read the validation message and preview.
 5. Select **Run on my spreadsheet**.
 6. Review the results and their limitations before interpreting them.
 

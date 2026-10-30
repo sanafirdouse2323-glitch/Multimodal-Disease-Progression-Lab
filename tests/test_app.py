@@ -37,15 +37,19 @@ def test_dashboard_renders_and_sample_experiment_completes():
 def test_beginner_friendly_homepage_explains_data_sources_and_whole_numbers():
     app = AppTest.from_file(str(ROOT / "app.py"), default_timeout=120).run(timeout=30)
     assert not app.exception, [exc.message for exc in app.exception]
-    rendered_markdown = "\\n".join(item.value for item in app.markdown)
-    assert "How it works" in rendered_markdown
-    assert "whole numbers" in rendered_markdown.lower()
+    rendered_text = "\\n".join(
+        [item.value for item in app.markdown]
+        + [item.label for item in app.radio]
+        + [item.label for item in app.caption]
+    )
+    assert "How it works" in rendered_text
+    assert "whole numbers" in rendered_text.lower()
     assert app.radio[0].options == [
         "Try sample data",
         "Enter simple numbers",
         "Upload a spreadsheet",
     ]
-    assert any("not a medical tool" in item.value.lower() for item in app.info)
+    assert any("not a medical tool" in item.value.lower() for item in app.info + app.warning)
 
     app.radio[0].set_value("Enter simple numbers")
     app.run(timeout=30)
@@ -78,6 +82,7 @@ def test_spreadsheet_upload_source_is_available():
     assert not app.exception, [exc.message for exc in app.exception]
     assert len(app.file_uploader) == 1
     assert any(button.label == "Run on my spreadsheet" for button in app.button)
+    assert any(uploader.label == "Choose a CSV file" for uploader in app.file_uploader)
 
 
 def test_synthetic_scenario_selector_accepts_all_sample_patterns():

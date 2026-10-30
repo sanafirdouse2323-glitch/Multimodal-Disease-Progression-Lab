@@ -49,7 +49,10 @@ def test_beginner_friendly_homepage_explains_data_sources_and_whole_numbers():
         "Enter simple numbers",
         "Upload a spreadsheet",
     ]
-    assert any("not a medical tool" in item.value.lower() for item in app.info + app.warning)
+    # Streamlit's AppTest exposes these element collections separately; do not
+    # concatenate ElementList instances (that is unsupported).
+    safety_notices = [item.value for item in app.info] + [item.value for item in app.warning]
+    assert any("not a medical tool" in value.lower() for value in safety_notices)
 
     app.radio[0].set_value("Enter simple numbers")
     app.run(timeout=30)

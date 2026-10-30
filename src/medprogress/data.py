@@ -33,6 +33,7 @@ MODALITY_FEATURES = {
 TARGET_COL = "target_stage"
 PATIENT_COL = "patient_id"
 STAGE_LABELS = [0, 1, 2, 3]
+SYNTHETIC_SCENARIOS = ("no_signal", "progression_signal", "difficult")
 
 # CSV schema for user-supplied, feature-level longitudinal data. Raw medical
 # images and raw wearable streams are deliberately outside this interface.
@@ -60,14 +61,21 @@ def make_synthetic_cohort(
     seed: int = 42,
     image_missing_probability: float = 0.12,
     wearable_missing_probability: float = 0.18,
+    scenario: str = "progression_signal",
 ) -> pd.DataFrame:
-    """Create artificial patients with irregular visits and three data modalities.
+    """Create artificial longitudinal patients under a named simulation scenario.
 
-    Stage 0-3 is an invented ordinal label. Modalities are noisy signals driven by
-    stage and latent patient risk; they are not actual scans or clinical measurements.
+    Stage 0-3 is an invented ordinal label. The progression_signal scenario plants
+    a hidden patient-level tendency that affects upward transitions and appears
+    noisily in observed features; no_signal omits that link; difficult weakens the
+    feature signal, increases measurement noise, and raises modality missingness.
+    These are controlled simulation assumptions, not claims about real diseases.
+    The hidden progression tendency is never included as a model feature.
     """
     if n_patients < 30:
         raise ValueError("n_patients must be at least 30 for meaningful demo splits")
+    if scenario not in SYNTHETIC_SCENARIOS:
+        raise ValueError(f"scenario must be one of {SYNTHETIC_SCENARIOS}; got {scenario!r}")
     for name, value in (
         ("image_missing_probability", image_missing_probability),
         ("wearable_missing_probability", wearable_missing_probability),
@@ -75,11 +83,27 @@ def make_synthetic_cohort(
         if not np.isfinite(value) or not 0.0 <= value <= 1.0:
             raise ValueError(f"{name} must be between 0 and 1")
 
+    # The difficult scenario deliberately has more modality-level missingness.
+    if scenario == "difficult":
+        image_missing_probability = max(image_missing_probability, 0.30)
+        wearable_missing_probability = max(wearable_missing_probability, 0.35)
+
+    image_signal = {"no_signal": 0.0, "progression_signal": 0.30, "difficult": 0.08}[scenario]
+    wearable_signal = {"no_signal": 0.0, "progression_signal": 0.22, "difficult": 0.06}[scenario]
+    clinical_signal = {"no_signal": 0.0, "progression_signal": 0.10, "difficult": 0.03}[scenario]
+    image_noise = 0.48 if scenario == "difficult" else 0.32
+    wearable_noise = 0.38 if scenario == "difficult" else 0.24
+    lab_a_noise = 0.22 if scenario == "difficult" else 0.16
+    lab_b_noise = 0.25 if scenario == "difficult" else 0.18
+
     rng = np.random.default_rng(seed)
     rows: list[dict] = []
     for patient_idx in range(n_patients):
         patient_id = f"SYNTH_{patient_idx:06d}"
         latent_risk = float(rng.normal())
+        # Independent patient-level liability: it affects transition probability only
+        # in scenarios that explicitly include a progression signal.
+        progression_trait = float(rng.normal())
         age = float(np.clip(rng.normal(62, 10), 30, 88))
         sex = int(rng.integers(0, 2))
         latent_risk += 0.12 * (age - 62) / 10.0
@@ -94,25 +118,46 @@ def make_synthetic_cohort(
             if visit_idx > 0:
                 gap_months = float(rng.choice([3, 6, 9, 12]))
                 month += gap_months
-                up_probability = 0.10 + 0.07 * (stage >= 1)
-                if rng.random() < up_probability:
-                    stage = min(3, stage + 1)
-                elif rng.random() < 0.035:
-                    stage = max(0, stage - 1)
+                if scenario == "no_signal":
+                    up_probability = 0.10 + 0.07 * (stage >= 1)
+                else:
+                    # In the signal scenarios, the latent progression liability affects
+                    # upward-transition risk. It is not included directly as a model feature.
+                    log_odds = -2.0 + 0.75 * progression_trait + 0.30 * (stage >= 1)
+                    up_probability = float(1.0 / (1.0 + np.exp(-log_odds)))
+
+                # Sample mutually exclusive up / down / stable outcomes. Stage 3
+                # cannot progress upward; the downward probability does not depend
+                # on the hidden progression trait.
+                if stage == 3:
+                    up_probability = 0.0
+                down_probability = 0.035 if stage > 0 else 0.0
+                up_probability = min(up_probability, 1.0 - down_probability)
+                draw = rng.random()
+                if draw < up_probability:
+                    stage += 1
+                elif draw < up_probability + down_probability:
+                    stage -= 1
 
             severity = stage / 3.0
             image_values = rng.normal(
-                loc=severity + 0.12 * latent_risk + patient_signature,
-                scale=0.32,
+                loc=severity + 0.12 * latent_risk + patient_signature + image_signal * progression_trait,
+                scale=image_noise,
                 size=8,
             )
             wearable_values = rng.normal(
-                loc=1.0 - 0.55 * severity + activity_signature,
-                scale=0.24,
+                loc=1.0 - 0.55 * severity + activity_signature - wearable_signal * progression_trait,
+                scale=wearable_noise,
                 size=6,
             )
-            lab_a = float(rng.normal(0.45 + 0.38 * severity + 0.12 * latent_risk, 0.16))
-            lab_b = float(rng.normal(0.35 + 0.42 * severity + 0.08 * latent_risk, 0.18))
+            lab_a = float(rng.normal(
+                0.45 + 0.38 * severity + 0.12 * latent_risk + clinical_signal * progression_trait,
+                lab_a_noise,
+            ))
+            lab_b = float(rng.normal(
+                0.35 + 0.42 * severity + 0.08 * latent_risk + 0.8 * clinical_signal * progression_trait,
+                lab_b_noise,
+            ))
             image_missing = bool(rng.random() < image_missing_probability)
             wearable_missing = bool(rng.random() < wearable_missing_probability)
             if image_missing:
@@ -143,6 +188,7 @@ def make_synthetic_cohort(
 
     frame = pd.DataFrame(rows).sort_values([PATIENT_COL, "time_months"]).reset_index(drop=True)
     frame.attrs["synthetic_only"] = True
+    frame.attrs["synthetic_scenario"] = scenario
     return frame
 
 
@@ -174,7 +220,7 @@ def create_forecast_examples(cohort: pd.DataFrame) -> pd.DataFrame:
         raise ValueError("No forecast examples could be created")
     examples = pd.DataFrame(output)
     # Carry known provenance forward instead of labelling every cohort synthetic.
-    for key in ("synthetic_only", "data_source"):
+    for key in ("synthetic_only", "data_source", "synthetic_scenario"):
         if key in cohort.attrs:
             examples.attrs[key] = cohort.attrs[key]
     return examples

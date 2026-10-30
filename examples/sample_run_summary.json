@@ -1,5 +1,6 @@
 {
   "synthetic_only": true,
+  "data_generator_note": "Historical snapshot generated before the controlled progression scenarios were added; the metrics below are not results from the current scenario-enabled generator.",
   "software_versions_note": "The versions below are recorded from the run that produced this saved synthetic snapshot and may differ from the current CI/deployment environment.",
   "settings": {"patients": 400, "epochs": 20, "seed": 42},
   "software_versions": {

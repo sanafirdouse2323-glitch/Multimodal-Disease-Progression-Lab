@@ -24,6 +24,7 @@ def run_experiment(
     seed: int = 42,
     epochs: int = 20,
     cohort: pd.DataFrame | None = None,
+    scenario: str = "progression_signal",
 ) -> dict[str, Any]:
     """Run the progression workflow on generated or validated visit-level data.
 
@@ -32,7 +33,7 @@ def run_experiment(
     """
     is_synthetic = cohort is None
     if cohort is None:
-        cohort = make_synthetic_cohort(n_patients=n_patients, seed=seed)
+        cohort = make_synthetic_cohort(n_patients=n_patients, seed=seed, scenario=scenario)
     else:
         cohort = cohort.copy(deep=True)
     examples = create_forecast_examples(cohort)
@@ -54,7 +55,7 @@ def run_experiment(
     rf_metrics, rf_predictions = benchmark_modalities(
         splits.train, splits.test, kind="random_forest", seed=seed
     )
-    lr_metrics, _ = benchmark_modalities(
+    lr_metrics, lr_predictions = benchmark_modalities(
         splits.train, splits.test, kind="logistic_regression", seed=seed
     )
     benchmarks = pd.concat([rf_metrics, lr_metrics], ignore_index=True)
@@ -77,11 +78,13 @@ def run_experiment(
 
     return {
         "data_mode": "synthetic" if is_synthetic else "uploaded_csv",
+        "synthetic_scenario": scenario if is_synthetic else None,
         "cohort": cohort,
         "examples": examples,
         "splits": splits,
         "benchmarks": benchmarks.sort_values(["model", "feature_group"]).reset_index(drop=True),
         "random_forest_predictions": rf_predictions["Multimodal fusion"],
+        "logistic_regression_predictions": lr_predictions["Multimodal fusion"],
         "neural_predictions": neural_predictions,
         "neural_metrics": neural_metrics,
         "training_history": history,

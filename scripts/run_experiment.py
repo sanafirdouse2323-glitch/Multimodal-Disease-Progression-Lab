@@ -16,15 +16,25 @@ def main() -> int:
     parser.add_argument("--patients", type=int, default=120)
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--scenario", choices=["no_signal", "progression_signal", "difficult"],
+        default="progression_signal", help="Synthetic progression scenario to simulate.",
+    )
     parser.add_argument("--output", type=Path, default=None)
     args = parser.parse_args()
     if args.patients < 30 or args.epochs < 1:
         parser.error("--patients must be >= 30 and --epochs must be >= 1")
 
-    result = run_experiment(n_patients=args.patients, seed=args.seed, epochs=args.epochs)
+    result = run_experiment(
+        n_patients=args.patients, seed=args.seed, epochs=args.epochs, scenario=args.scenario
+    )
     summary = {
         "synthetic_only": True,
-        "settings": {"patients": args.patients, "epochs": args.epochs, "seed": args.seed},
+        "settings": {
+            "patients": args.patients, "epochs": args.epochs, "seed": args.seed,
+            "scenario": args.scenario,
+        },
+        "synthetic_scenario": args.scenario,
         "software_versions": result["software_versions"],
         "split_sizes": {
             name: {

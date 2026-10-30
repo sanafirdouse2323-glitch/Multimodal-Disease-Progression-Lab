@@ -264,7 +264,12 @@ elif data_source == "Upload CSV":
                     "it does not include scan or wearable-device measurements."
                 )
             original_columns = {str(column).strip() for column in raw_uploaded_frame.columns}
-            ignored_columns = sorted(original_columns - set(UPLOAD_TEMPLATE_COLUMNS))
+            recognised_columns = (
+                {PERSON_COLUMN, *STAGE_COLUMNS}
+                if uploaded_simple
+                else set(UPLOAD_TEMPLATE_COLUMNS)
+            )
+            ignored_columns = sorted(original_columns - recognised_columns)
             if ignored_columns:
                 st.warning(
                     "These extra columns are not used and will be ignored: "

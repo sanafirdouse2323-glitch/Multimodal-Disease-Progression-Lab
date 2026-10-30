@@ -1,85 +1,208 @@
 # Multimodal Disease Progression Lab
 
-**Live interactive demo:** https://multimodal-disease-progression-lab.onrender.com
+**Live interactive demo:** https://multimodal-disease-progression-lab.onrender.com  
+**GitHub repository:** https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab
 
-**GitHub source:** https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab
+I built this project as an educational machine-learning and research-methods prototype. I use it to demonstrate how a workflow can combine imaging-related numerical features, wearable-style numerical features, and clinical or visit-level information when estimating a participant's stage at their next recorded visit.
 
+The default experience uses entirely synthetic data. I also provide an option to upload a longitudinal CSV containing already-computed numerical features. I do not claim that the synthetic data represent a real disease, that the generated relationships are medically established, or that the models are ready for clinical use.
 
-A runnable, educational machine-learning-in-medicine research demonstration aligned with five broad themes in a multimodal disease-progression PhD advertisement: multimodal fusion, sparse longitudinal progression, causal treatment-effect estimation, missing modalities, and subgroup evaluation.
+> **Important:** This is a research and learning prototype, not a diagnostic, prognostic, or treatment tool. The hosted website is public and receives uploaded files. Do not upload identifiable, confidential, or unauthorised health information. The app does not accept raw MRI, X-ray, image, or wearable sensor files.
 
-**Default demo: synthetic data.** The app also lets you upload a CSV of tabular, numerical feature-level longitudinal data or download an empty CSV template. Uploaded data are used for progression-model evaluation; the causal-effect tab remains a separate synthetic simulation. The upload option does not accept raw medical images or raw wearable streams.
+## What I built
 
-**Privacy and validity:** The public Render app receives uploaded files. Do not upload identifiable, confidential, or unauthorised health data. Format validation does not establish clinical validity. This is an educational software/methods demonstration, not a clinical tool or a claim to reproduce any supervisor's unpublished research.
+The project contains an interactive Streamlit dashboard and a Python experiment pipeline. I organised the workflow around five methods-oriented themes:
 
-## What is implemented
+1. **Multimodal learning:** comparing imaging-related, wearable-style, and clinical/temporal feature groups individually and together.
+2. **Longitudinal progression:** using the measurements from one visit to predict the stage label at the next observed visit.
+3. **Missing-modality analysis:** examining what happens when an imaging or wearable feature group is additionally masked at evaluation time.
+4. **Synthetic causal-effect estimation:** comparing simple estimators when the treatment effect and data-generating assumptions are known by construction.
+5. **Descriptive subgroup evaluation:** reporting model metrics for the available age and numeric group-code subgroups.
 
-- Reproducible synthetic patients with irregularly spaced visits and imaging-related, wearable-style and tabular feature groups.
-- Three explicit synthetic scenarios: no additional progression signal, a planted noisy progression signal, and a difficult low-signal/high-missingness setting.
-- Optional CSV upload for a validated visit-level feature table, plus a downloadable blank CSV shell; see `UPLOAD_DATA_GUIDE.md`.
-- Next-observed-visit stage classification with patient-level train/validation/test splits.
-- Training-only preprocessing for neural inputs and preprocessing pipelines for classical models.
-- Logistic regression, random forest, persistence and majority-class baselines.
-- A PyTorch fusion model with separate encoders for each modality.
-- Test-time missing-modality stress tests, a controlled causal simulation with known ground truth, and descriptive subgroup metrics.
-- Streamlit UI, CSV/JSON exports, automated tests, and GitHub Actions CI.
+These themes describe the software demonstrations in this repository. They are not claims that I have established a clinical method or validated a medical model.
 
-## Run locally
+## What the application does
 
-```bash
-git clone https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab.git
-cd Multimodal-Disease-Progression-Lab
-python -m venv .venv
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-streamlit run app.py
-```
+I designed the dashboard so that a visitor can start without supplying a dataset.
 
-On Windows PowerShell, activate with `.venv\\Scripts\\Activate.ps1`; on macOS/Linux, use `source .venv/bin/activate` after creating the virtual environment.
+| Area | What I implemented |
+|---|---|
+| Synthetic data | Generates artificial participants with multiple visits, stage labels, feature groups, irregular visit gaps, and configurable missingness. |
+| Scenario selection | Provides a negative-control scenario, a scenario with a deliberately planted noisy progression signal, and a more difficult low-signal/high-missingness scenario. |
+| CSV input | Validates a visit-level table containing participant IDs, visit times, stage labels, and optional numerical features. |
+| Progression models | Compares Random Forest, Logistic Regression, a neural multimodal fusion model, and simpler baselines. |
+| Modality comparison | Evaluates imaging-related, wearable-style, clinical/temporal, and fused feature groups. |
+| Missing-data stress test | Applies additional inference-time modality dropout to a Random Forest trained on the original training split. |
+| Causal simulation | Compares unadjusted, adjusted-regression, and inverse-probability-weighted estimates against a known synthetic effect. |
+| Subgroup evaluation | Reports descriptive metrics by available age groups and numeric group codes. |
+| Exports | Provides benchmark metrics, held-out predictions, an experiment-summary JSON file, and a blank CSV template. |
 
-## Verify and run headless
+## How I define the prediction task
 
-```bash
-PYTHONPATH=src python -m pytest -q
-python scripts/run_experiment.py --patients 120 --epochs 3 --seed 42 --scenario progression_signal --output /tmp/smoke-summary.json
-```
+Each participant has a sequence of visits. For a given visit, the model receives features recorded at that visit and predicts the stage label recorded at the participant's next observed visit.
 
-Run a repeated-seed comparison across all three scenarios (this takes longer because it trains three model families for each seed):
+For example, if the stage code is 1 at month 6 and the next recorded stage code is 2 at month 12, the month-6 example has target label 2. The time between visits can vary. I therefore describe this as **next-observed-visit classification**, not a fixed 6-month, 12-month, or other fixed-horizon forecast.
 
-```bash
-python scripts/evaluate_progression_scenarios.py --patients 400 --seeds 10 --epochs 5 --bootstrap-replicates 500
-```
+The stage labels 0, 1, 2, and 3 are generic codes in this prototype. Their meaning depends on the mapping chosen by whoever supplies a dataset. The software does not define or validate a medical staging system.
 
-The script writes per-run results to progression_scenario_runs.csv and aggregated scenario summaries to progression_scenario_summary.csv. It compares Random Forest, Logistic Regression and neural multimodal fusion with persistence, reports exact accuracy on the subset of windows whose stage actually changes plus binary stage-change precision/recall/F1, and computes paired patient-level bootstrap intervals for overall accuracy differences within each run. The seed-to-seed spread and bootstrap intervals are descriptive simulation diagnostics, not clinical confidence intervals. The dashboard also shows these transition-specific metrics so high overall accuracy cannot conceal poor performance on changed-stage cases.
+I split data by participant, rather than randomly splitting individual visit rows. The default split is 60% training participants, 20% validation participants, and 20% test participants. This keeps visits belonging to one participant in one partition. For the neural model, I fit imputation and standardisation values using the training partition only. I select the neural checkpoint using validation macro-F1; I do not use test labels for training or checkpoint selection.
 
-## Evaluation cautions
+## The three synthetic scenarios
 
-The target is the stage at the next observed visit, not a fixed 6- or 12-month forecast. Uploaded CSVs require `patient_id`, numeric `time_months`, and `current_stage` encoded as 0, 1, 2, or 3. Optional columns are `age_years`, `sex_binary`, `lab_a`, `lab_b`, `img_0`–`img_7`, and `wear_0`–`wear_5`. See `UPLOAD_DATA_GUIDE.md` for the complete schema. Extra columns are ignored and reported. Patient IDs are excluded from model features, and splits are made by patient to keep visits for one patient in a single partition. Neural preprocessing statistics are learned from training data only. Baselines are included because a complex model is not guaranteed to outperform carrying forward the current stage.
+I added three controlled scenarios so that the software can be examined under different artificial data-generating assumptions.
 
-### Synthetic progression scenarios
+| Scenario | What I simulate | What the scenario is for |
+|---|---|---|
+| **progression_signal** (default) | A hidden patient-level tendency influences the probability of an upward stage transition. I encode that tendency noisily in generated imaging-related, wearable-style, and laboratory features. The hidden value itself is not supplied to the models. | Tests whether a model can recover a deliberately planted, noisy relationship. |
+| **no_signal** | Stage transitions follow stage-dependent random rules, without a patient-specific progression tendency being reflected in the measurements. | Acts as a negative control. A learned model should not be assumed to outperform persistence. |
+| **difficult** | I weaken the planted feature signals, increase measurement noise, and raise imaging and wearable modality missingness. | Tests the pipeline under a deliberately harder synthetic setting. |
 
-- no_signal: transitions use stage-dependent random rules, while the measured modalities have no direct patient-specific progression signal. This is a negative-control scenario; persistence may perform as well as or better than learned models.
-- progression_signal (default): a hidden patient-level progression tendency affects upward-transition probability and is reflected noisily in generated image-related, wearable-style and laboratory measurements. This is intentionally planted signal, not an established medical relationship.
-- difficult: the planted signal is weaker, measurements are noisier, and imaging/wearable modality missingness is higher.
+These are software test conditions. The planted relationship is an assumption in my generator, not a known medical mechanism. A model's ability to detect a relationship in this simulation does not demonstrate that the relationship exists in real patients.
 
-These scenarios test whether the software can recover an assumed relationship under controlled synthetic conditions. They do not establish that real clinical measurements contain the same relationship. The generator's assumptions should be treated as experimental controls, not medical facts. A model that beats persistence in the signal scenario must still be tested across seeds, checked for uncertainty, and evaluated on appropriately governed real-world data before making any clinical claims.
+## Models and baselines
 
-The causal analysis only demonstrates whether estimators recover an effect in a known synthetic data-generating process; it does not establish identification in real observational medicine. Subgroup measures are descriptive: the synthetic mode uses generated demographics, while uploaded-data mode uses supplied age and sex/code values where available. These metrics do not establish fairness. The missing-modality experiment adds test-time modality dropout to a model trained on the original data; it is not proof of robustness to missing-not-at-random data or a substitute for training-time robustness experiments.
+I compare the following approaches:
 
-The saved examples/sample_run_summary.json is a historical snapshot from before the three-scenario generator was introduced; its performance numbers are not results from the current default scenario. Regenerate experiments using the commands above for current comparisons. The saved example also records the software versions from its original run, which may differ from the current CI/deployment environment.
+- **Persistence baseline:** predicts that the next stage will equal the current stage.
+- **Majority-class baseline:** predicts the most common next-stage class in the training data.
+- **Random Forest:** fits separate models to each feature group and to the combined feature set.
+- **Logistic Regression:** provides the same feature-group comparisons using a linear classifier.
+- **Neural multimodal fusion:** uses separate small neural-network encoders for imaging-related, wearable-style, and clinical/temporal inputs, then combines their representations for four-class prediction.
 
-## Repository contents
+I report accuracy and macro-F1. Accuracy measures the fraction of correct predictions. Macro-F1 calculates F1 for each of the four stage labels and averages the class scores equally, so performance on less common labels is not hidden by the largest class.
 
-- `app.py` — interactive Streamlit dashboard.
-- `src/medprogress/data.py` — synthetic cohort, forecast examples and splits.
-- `src/medprogress/evaluation.py` — baselines, neural fusion, metrics and stress tests.
-- `src/medprogress/causal.py` — known-ground-truth treatment-effect simulation.
-- `src/medprogress/experiment.py` — experiment orchestration.
-- `scripts/run_experiment.py` — headless reproducible experiment with scenario selection.
-- `scripts/evaluate_progression_scenarios.py` — repeated-seed comparison of multimodal models against persistence, including patient-level bootstrap intervals.
-- `tests/` — automated regression tests, including checks for the planted synthetic progression signal.
-- `.github/workflows/tests.yml` — CI test and smoke experiment.
-- `examples/sample_run_summary.json` — saved sample output from a synthetic run.
-- `templates/longitudinal_upload_template.csv` — blank, header-only CSV shell.
-- `UPLOAD_DATA_GUIDE.md` — accepted input schema, workflow, and privacy limits.
+I also report exact next-stage accuracy on test windows where the stage actually changed, together with precision, recall, and F1 for detecting whether any stage change occurred. I added these measures because an overall score can look high when most next-visit labels stay unchanged.
 
-See `GITHUB_SETUP.md` for maintenance instructions, `DEPLOYMENT.md` for Render configuration, and `UPLOAD_DATA_GUIDE.md` for CSV input rules. Render's free service may sleep when idle. Never commit real patient data, credentials or identifiable health information.
+## What the current synthetic evaluation shows
+
+I ran the repeated-seed evaluator in GitHub Actions run 43 using 400 synthetic participants per run, 10 seeds per scenario, 5 neural training epochs, and 500 patient-bootstrap replicates for each model/run comparison. The following are the mean **overall accuracy** values reported by that run:
+
+| Scenario | Persistence | Random Forest (multimodal) | Logistic Regression (multimodal) | Neural multimodal fusion |
+|---|---:|---:|---:|---:|
+| progression_signal | 85.28% | 83.19% | 83.93% | 54.56% |
+| no_signal | 85.74% | 85.30% | 84.61% | 54.41% |
+| difficult | 85.28% | 84.83% | 84.61% | 56.82% |
+
+**My interpretation:** in this evaluation, none of the three multimodal models achieved a higher mean overall accuracy than the persistence baseline. The neural model performed substantially worse on this task in these runs. This is an important limitation, not a result I will hide or describe as a successful predictive model.
+
+The evaluation script also measures performance specifically on changed-stage windows and records paired patient-level bootstrap intervals for the accuracy difference from persistence. Those intervals are simulation diagnostics for this experiment; they are not clinical confidence intervals. The full per-run CSVs created by the CI job are temporary CI outputs and are not committed to this repository. You can reproduce the analysis locally using the command below.
+
+Results can change with the data-generating assumptions, sample size, random seeds, dependency versions, and training settings. I do not present these synthetic results as clinical performance.
+
+## Run the project locally
+
+I recommend Python 3.12, which is the version recorded in the repository's .python-version file.
+
+1. Clone the repository and enter the project directory:
+
+    git clone https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab.git
+    cd Multimodal-Disease-Progression-Lab
+
+2. Create and activate a virtual environment.
+
+   Windows PowerShell:
+
+    python -m venv .venv
+    .\.venv\Scripts\Activate.ps1
+
+   macOS or Linux:
+
+    python -m venv .venv
+    source .venv/bin/activate
+
+3. Install the dependencies and launch the dashboard:
+
+    python -m pip install --upgrade pip
+    python -m pip install -r requirements.txt
+    streamlit run app.py
+
+4. Open the local address printed by Streamlit in your browser.
+
+The requirements file installs CPU-only PyTorch. A GPU is not required for this demonstration.
+
+## Run the tests and experiments
+
+From the repository root, run the automated tests:
+
+Windows PowerShell:
+
+    $env:PYTHONPATH = "src"
+    python -m pytest -q
+
+macOS or Linux:
+
+    PYTHONPATH=src python -m pytest -q
+
+Run one reproducible synthetic experiment:
+
+    python scripts/run_experiment.py --patients 120 --epochs 3 --seed 42 --scenario progression_signal --output smoke-summary.json
+
+Choose any of the three supported scenario names:
+
+    python scripts/run_experiment.py --patients 120 --epochs 3 --seed 42 --scenario no_signal
+    python scripts/run_experiment.py --patients 120 --epochs 3 --seed 42 --scenario difficult
+
+Run the repeated-seed evaluation across all three scenarios:
+
+    python scripts/evaluate_progression_scenarios.py --patients 400 --seeds 10 --epochs 5 --bootstrap-replicates 500 --runs-output progression_scenario_runs.csv --summary-output progression_scenario_summary.csv
+
+The repeated-seed script writes one CSV with per-run results and another with aggregated scenario summaries. It compares Random Forest, Logistic Regression, and neural fusion against persistence, includes modality ablations, records changed-stage metrics, and calculates paired patient-level bootstrap intervals for accuracy differences. These CSV files are generated outputs; I do not treat them as source files, and I do not commit them unless there is a specific reason to preserve a result.
+
+## Use a CSV of my own feature-level data
+
+I provide three data-source options in the sidebar:
+
+- **Synthetic demo:** runs the built-in generator. This is the safest way to explore the dashboard.
+- **Upload CSV:** accepts a longitudinal table with one row per visit.
+- **Empty CSV template:** downloads a header-only CSV that can be filled in separately.
+
+The required columns are **patient_id**, **time_months**, and **current_stage**. Optional columns are **age_years**, **sex_binary**, **lab_a**, **lab_b**, **img_0** through **img_7**, and **wear_0** through **wear_5**.
+
+The application accepts numerical features that have already been extracted. It does not read image files or process raw wearable sensor streams. The complete schema, validation rules, and upload instructions are in [UPLOAD_DATA_GUIDE.md](UPLOAD_DATA_GUIDE.md).
+
+The public hosted application receives any file uploaded to it. Do not upload identifiable or confidential health information. For sensitive or regulated research data, use an institutionally approved secure environment and follow the relevant consent, ethics, and data-governance requirements.
+
+A CSV passing format validation only means that it meets the checks implemented by this prototype. It does not establish that the dataset is clinically meaningful, representative, unbiased, legally usable, or suitable for drawing a research conclusion.
+
+## Important methodological limitations
+
+- The next visit may occur after different time intervals; the task is not a fixed-horizon forecast.
+- The generated stage labels and relationships are artificial and have no inherent medical interpretation.
+- A feature-level CSV upload is not raw-image or raw-sensor analysis.
+- The models may not outperform the persistence baseline. The current repeated-seed results show that they do not do so on mean overall accuracy.
+- The additional missing-modality test masks modalities at evaluation time after training on the original training split. It does not prove robustness to real-world missing-not-at-random data.
+- The causal-effect tab uses its own synthetic dataset and known effect. It does not estimate a causal effect from an uploaded progression CSV.
+- The subgroup results are descriptive. They do not establish fairness, and the optional numeric group code is not interpreted as a particular identity or category by the software.
+- The prototype has not been clinically validated, externally validated, or approved for patient care.
+
+I describe the implementation details and limitations in [METHODS_AND_LIMITATIONS.md](METHODS_AND_LIMITATIONS.md).
+
+## Repository structure
+
+| Path | Purpose |
+|---|---|
+| app.py | Streamlit dashboard and visitor instructions. |
+| src/medprogress/data.py | Synthetic data generation, CSV validation, forecast-example construction, and participant-level splitting. |
+| src/medprogress/evaluation.py | Classical models, neural fusion, metrics, missing-modality stress testing, and subgroup summaries. |
+| src/medprogress/causal.py | Separate synthetic treatment-effect simulation with known ground truth. |
+| src/medprogress/experiment.py | End-to-end experiment orchestration. |
+| scripts/run_experiment.py | Command-line runner for one synthetic experiment. |
+| scripts/evaluate_progression_scenarios.py | Repeated-seed, multi-scenario comparison and bootstrap diagnostics. |
+| tests/ | Regression tests for the app, data handling, models, causal simulation, uploads, and synthetic scenarios. |
+| .github/workflows/tests.yml | GitHub Actions tests, smoke experiment, and repeated-seed evaluation. |
+| examples/sample_run_summary.json | Historical synthetic output recorded before the three-scenario generator was introduced. |
+| templates/longitudinal_upload_template.csv | Blank longitudinal CSV template. |
+| UPLOAD_DATA_GUIDE.md | Detailed CSV schema, validation and privacy instructions. |
+| METHODS_AND_LIMITATIONS.md | Explanation of the workflow, model design, evaluation, and scientific boundaries. |
+| GITHUB_SETUP.md | Local setup and GitHub contribution instructions. |
+| DEPLOYMENT.md | Render deployment configuration and verification steps. |
+
+## How I maintain the project
+
+I use GitHub Actions to run the tests and synthetic experiments on pull requests and pushes to main. My Render service is connected to the main branch with automatic deployment enabled. A successful GitHub merge does not, by itself, prove that the website has deployed successfully; I check the Render deployment record and confirm the deployed commit before describing a revision as live.
+
+For maintenance instructions, see [GITHUB_SETUP.md](GITHUB_SETUP.md) and [DEPLOYMENT.md](DEPLOYMENT.md).
+
+---
+
+I built this repository as a transparent, reproducible educational prototype. I welcome careful inspection of its code and results, especially where the evidence shows that the current models still need improvement.

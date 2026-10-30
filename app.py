@@ -31,60 +31,80 @@ st.set_page_config(
 )
 
 st.title("Multimodal Disease Progression Lab")
-st.caption("Research prototype · synthetic demo or uploaded feature-level CSV · not a diagnostic or treatment tool")
+st.caption("A research-methods prototype I built · synthetic demo or uploaded feature-level CSV · not a diagnostic or treatment tool")
 st.markdown(
-    "Choose the built-in synthetic demo, upload a longitudinal CSV of numerical features, or download a blank CSV template. "
+    "I built this dashboard to demonstrate a reproducible, feature-level machine-learning workflow for next-observed-visit stage classification. "
+    "Start with the synthetic demo, or read my [project README](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/blob/main/README.md), "
+    "[methods and limitations](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/blob/main/METHODS_AND_LIMITATIONS.md), "
+    "and [CSV upload guide](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/blob/main/UPLOAD_DATA_GUIDE.md). "
     "**This is a public hosted demo:** do not upload identifiable, confidential, or unauthorised patient data. "
-    "Raw medical images and raw wearable sensor files are not accepted."
+    "I do not process raw medical images or raw wearable sensor files."
 )
 
 with st.expander("Start here: how this demo works", expanded=True):
     st.markdown(
         """
 ### What is this page?
-This is an interactive demonstration of a machine-learning workflow. It uses information from one patient visit to estimate the stage label at that person's next recorded visit. The default mode uses computer-generated example data, not real patient records.
+I built this dashboard as an educational research-methods prototype. It demonstrates a workflow that uses information recorded at one visit to estimate the stage label recorded at a participant's next observed visit. The default mode creates artificial example records; it does not use real patient data.
 
-### Run your first experiment
+### How to run your first experiment
 1. Leave **Synthetic demo** selected in the left-hand **Data source** menu.
-2. Keep the default settings for your first run.
-3. Click **Run full experiment** in the left sidebar.
-4. When the run finishes, explore the six results tabs below. You do not need to upload a file to try the demo.
+2. Keep the default settings for an initial run.
+3. Choose one of the three synthetic scenarios, or leave **Progression signal present** selected.
+4. Click **Run full experiment** in the left sidebar.
+5. When the run finishes, explore the six result tabs. You do not need to upload a file to try the dashboard.
 
 ### What does “next visit” mean?
-Example only: a participant has stage code **1** at month **6**, then stage code **2** at month **12**. For the month-6 row, the target is the stage recorded at the next visit—code **2**. This is a next-recorded-visit prediction, not a promise about what will happen at a fixed 6- or 12-month date. Codes 0–3 are only labels; their medical meaning depends on how a data owner defines them. This example is not a real patient record.
+I predict the label recorded at the next observed visit, not at a fixed future date. For example, if a participant has stage code **1** at month **6** and stage code **2** at month **12**, the month-6 row has target code **2**. Visit gaps can vary, so this is not automatically a 6-month or 12-month forecast. Codes 0–3 are generic labels; their medical meaning must be defined by the dataset owner. This example is artificial, not a real patient record.
 
-### What information does it use?
-- **Imaging-related features:** numbers in img_0 to img_7. This app does not read or analyse MRI or X-ray files.
-- **Wearable-style features:** numbers in wear_0 to wear_5. Raw sensor streams are not processed by this app.
-- **Clinical and visit information:** age, an optional numeric group code, two generic measurement fields, current stage and time between visits.
-In synthetic mode, these values are simulated. For uploads, the imaging and wearable columns must already contain computed numerical features.
+### What information does my prototype use?
+I organise the numerical inputs into three broad groups:
+- **Imaging-related features:** eight precomputed values, named img_0 to img_7. I do not load or analyse MRI, X-ray, or other raw image files.
+- **Wearable-style features:** six precomputed values, named wear_0 to wear_5. I do not process raw wearable sensor recordings.
+- **Clinical and visit information:** age, an optional numeric group code, two generic measurement fields, current stage, visit gap, and indicators for missing imaging or wearable groups.
 
-### Try the three synthetic scenarios
-- **Progression signal present:** a hidden, stable patient-level progression tendency affects future upward transitions and is reflected imperfectly in the generated measurements.
-- **No additional progression signal:** future transitions follow stage-dependent random rules, without a patient-specific progression tendency reflected in the measurements.
-- **Difficult:** the progression tendency is harder to measure because feature signals are weaker, measurement noise is larger, and whole imaging/wearable modalities are missing more often.
+In synthetic mode, the generator creates all these values. For CSV uploads, the imaging and wearable columns must already contain numerical features prepared outside this app.
 
-These are controlled teaching scenarios, not medically validated disease mechanisms. The signal scenario tests whether models can recover a deliberately planted synthetic relationship; it does not show that the same relationship exists in real patients. Always compare with the persistence baseline.
+### Why did I add three synthetic scenarios?
+I use three controlled settings to make the assumptions visible:
+
+- **Progression signal present:** I plant a hidden, stable patient-level tendency that affects the probability of an upward stage transition. The generated imaging-related, wearable-style, and laboratory measurements contain noisy traces of that tendency.
+- **No additional progression signal:** transitions follow stage-dependent random rules, without a patient-specific progression tendency reflected in the measurements. This is my negative-control scenario.
+- **Difficult:** I weaken the planted feature signal, increase measurement noise, and make imaging and wearable feature groups missing more often.
+
+These are artificial software test conditions, not medically validated disease mechanisms. The hidden tendency is not given directly to the models. Planting a relationship in synthetic data does not establish that the same relationship exists in real patients. I always compare model results with the persistence baseline.
+
+### Which models and baselines did I implement?
+I compare a persistence baseline (predict the current stage again), a majority-class baseline, Random Forest, Logistic Regression, and a small PyTorch neural multimodal fusion model. I also compare Random Forest and Logistic Regression across imaging-only, wearable-only, clinical/temporal, and combined feature groups.
+
+For the neural model, I use separate small encoders for the three feature groups and combine their representations before predicting one of four stage labels. I fit the neural preprocessing on training data and select the checkpoint using validation macro-F1.
 
 ### What do the six result tabs show?
-1. **Progression models:** compares predictions with next-visit labels for held-out patients, alongside simpler reference methods.
-2. **Modality comparison:** compares each feature group with the combined feature groups.
-3. **Missing data:** hides some feature groups during testing as a controlled stress test; this does not prove robustness to every real-world missing-data pattern.
-4. **Causal simulation:** illustrates treatment-effect estimates on a separate synthetic dataset. It does not estimate treatment effects from an uploaded progression CSV.
-5. **Subgroup evaluation:** shows descriptive scores for available age and numeric group codes. These alone do not prove fairness.
-6. **Data and exports:** previews the data and train/validation/test splits, and provides CSV and JSON downloads.
+1. **Progression models:** I compare held-out next-visit predictions with the actual next-visit labels and simpler baselines. I also show exact next-stage accuracy on windows where a stage change occurred, plus precision, recall, and F1 for detecting any change.
+2. **Modality comparison:** I compare imaging-related, wearable-style, clinical/temporal, and combined feature groups.
+3. **Missing data:** I train a Random Forest on the original training data, then mask whole modalities additionally at test time. This is a controlled stress test, not proof of robustness to every real-world missing-data pattern.
+4. **Causal simulation:** I compare estimators on a separate synthetic dataset where the treatment effect is known by construction. I do not estimate treatment effects from an uploaded progression CSV.
+5. **Subgroup evaluation:** I report descriptive scores for available age groups and numeric code groups. These results alone do not establish fairness.
+6. **Data and exports:** I show data previews and split sizes, and provide benchmark CSV, held-out prediction CSV, and experiment-summary JSON downloads.
 
 ### How to understand the scores
-**Accuracy** is the fraction of held-out predictions that are correct. **Macro-F1** summarises performance across stage labels while giving each label equal weight. Both range from 0 to 1, where higher is better for the same evaluation task. Compare models on the same data and test split, and check whether a complex model actually beats the simpler baselines. A score from simulated data is not evidence of clinical accuracy.
+**Accuracy** is the fraction of held-out predictions that are correct. **Macro-F1** calculates an F1 score for each of the four labels and averages those scores equally. Both range from 0 to 1. I recommend comparing models on the same data split and checking whether a more complex model actually improves on the simpler baselines.
+
+Overall accuracy can be misleading when most labels stay unchanged. That is why I added the changed-stage diagnostics. In my latest repeated-seed synthetic evaluation, the multimodal models did not exceed persistence on mean overall accuracy. A score from simulated data is not evidence of clinical accuracy.
 
 ### Can I use my own data?
-1. Choose **Empty CSV template** in the left menu and download the blank file. Fill it in on your computer; it is not an editable spreadsheet inside this website.
-2. Use one row per visit and the same non-identifying study code for each participant across visits. Fill in time_months and current_stage (integer label 0, 1, 2 or 3). Map your stage definitions before upload.
-3. Each participant needs at least two visits and at least 10 different participant codes are needed for splitting. Ten is a technical minimum, not a sample-size recommendation. The training data must also contain at least two different next-visit stage labels.
-4. Optional fields include age_years, sex_binary, lab_a, lab_b, img_0 to img_7 and wear_0 to wear_5. The img and wear columns need precomputed numbers, not pictures or raw streams.
-5. Select **Upload CSV**, choose your completed file, read the validation message and preview, then click **Run full experiment**.
+1. Choose **Empty CSV template** in the left menu and download the blank file. I provide a header-only template; it is not an editable spreadsheet inside this website.
+2. Enter one row per visit and use the same non-identifying study code for each participant. Fill in time_months and current_stage. Stage codes must be integer labels 0, 1, 2, or 3.
+3. Give every participant at least two visits and use at least 10 unique participant codes. Ten is only the technical minimum for splitting, not a recommended research sample size.
+4. Optional columns are age_years, sex_binary, lab_a, lab_b, img_0 to img_7, and wear_0 to wear_5. The image and wearable columns require precomputed numbers, not pictures or raw streams.
+5. Choose **Upload CSV**, select the completed file, read the validation message and preview, then click **Run full experiment**.
 
-The app checks file structure, not whether your dataset is scientifically suitable. This public website receives uploaded files, so do not upload identifiable, confidential or unauthorised data. Use an approved secure environment for sensitive research. This prototype is not a diagnostic tool and does not recommend treatment.
+The training partition must also contain at least two different next-visit stage labels. A file can pass structural validation but still fail when an experiment starts if the training labels do not meet this requirement.
+
+### Privacy, scope, and limitations
+The public website receives files uploaded through the browser. Do not upload names, dates of birth, medical record numbers, identifiable health records, confidential information, or data you are not authorised to use. For sensitive research data, use an approved secure environment.
+
+I built this as a methods and software demonstration. It does not diagnose, recommend treatment, establish causality in real data, prove fairness, or validate a clinical prediction system. I explain the accepted CSV schema in the [upload guide](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/blob/main/UPLOAD_DATA_GUIDE.md), the implementation in the [methods and limitations note](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/blob/main/METHODS_AND_LIMITATIONS.md), and the complete project in the [README](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/blob/main/README.md). This prototype is not a diagnostic tool.
         """
     )
 
@@ -184,8 +204,8 @@ def render_blank_template_download(button_label: str = "Download blank CSV templ
 if data_source == "Empty CSV template":
     st.subheader("Start with an empty data shell")
     st.write(
-        "Download a header-only CSV, enter one row per patient visit, and then choose **Upload CSV**. "
-        "The template is intentionally empty; it contains column names but no patient records."
+        "I provide a header-only CSV so you can enter one row per visit and then choose **Upload CSV**. "
+        "I keep the template intentionally empty: it contains column names but no participant records."
     )
     render_blank_template_download()
     st.markdown(
@@ -238,8 +258,8 @@ if data_source == "Upload CSV":
     if n_uploaded_patients < 30:
         st.warning("This is a small cohort. Metrics may be unstable and should be treated as exploratory.")
     st.info(
-        "Format validation checks the table structure, not whether a dataset is clinically appropriate or scientifically valid. "
-        "Uploaded tabular data are used for progression, missingness, and subgroup analyses; the causal-effect tab uses a separate synthetic dataset."
+        "I check the table structure, not whether a dataset is clinically appropriate or scientifically valid. "
+        "I use uploaded tabular data for progression, modality, added-missingness, and subgroup analyses; the causal-effect tab uses a separate synthetic dataset."
     )
 
 if run_clicked:
@@ -277,12 +297,12 @@ if result is None:
     if data_source == "Upload CSV" and uploaded_cohort is not None:
         st.subheader("Uploaded dataset preview")
         st.write(
-            "The CSV passed basic schema checks. Click **Run full experiment** in the sidebar to train the models. "
-            "The validator does not assess clinical suitability or approve a research analysis."
+            "I have checked the CSV structure. Click **Run full experiment** in the sidebar to fit the models. "
+            "My validator checks format only; it does not assess clinical suitability or approve a research analysis."
         )
         st.dataframe(uploaded_cohort.head(10), use_container_width=True, hide_index=True)
     else:
-        st.info("Choose settings in the sidebar and select **Run full experiment** to train models and create results.")
+        st.info("Choose settings in the sidebar and select **Run full experiment**. I will then fit the models and display the results for the selected data source.")
         st.subheader("What this demo contains")
         cards = st.columns(3)
         cards[0].metric("Modalities", "3", "Imaging-related, wearable-style, clinical-style")
@@ -325,8 +345,8 @@ progression_tab, modalities_tab, missing_tab, causal_tab, fairness_tab, data_tab
 with progression_tab:
     st.subheader("Next-observed-visit stage classification")
     st.write(
-        "Models use current-visit measurements to predict the stage at the patient's next observed visit. "
-        "Visit gaps are irregular, so this is not a fixed-horizon forecast."
+        "I use current-visit measurements to predict the stage recorded at the participant's next observed visit. "
+        "Visit gaps can be irregular, so I do not describe this as a fixed-horizon forecast."
     )
     fusion_rows = benchmarks[
         ((benchmarks["feature_group"] == "Multimodal fusion") &
@@ -413,15 +433,15 @@ with modalities_tab:
     )
     st.plotly_chart(fig, use_container_width=True)
     st.dataframe(classic, use_container_width=True, hide_index=True)
-    st.info("This is an ablation-style comparison, not proof of clinical benefit. Random variation and synthetic data design can strongly affect the ordering.")
+    st.info("I use this as an ablation-style comparison of feature groups. It is not proof of clinical benefit, and random variation or synthetic data design can strongly affect the ordering.")
 
 with missing_tab:
     st.subheader("Additional missing-modality stress test")
     miss = result["missingness"].copy()
     st.write(
-        "A random forest is trained on the original training split. At evaluation time, additional whole-modality "
-        "dropout is injected into test features and modality-missing flags are updated. The model is not retrained "
-        "for each dropout rate."
+        "I train a Random Forest on the original training split. At evaluation time, "
+        "I apply additional whole-modality dropout to the test features and update the modality-missing flags. "
+        "I do not retrain the model for each dropout rate."
     )
     st.dataframe(miss, use_container_width=True, hide_index=True)
     fig = px.line(
@@ -440,9 +460,9 @@ with causal_tab:
     st.subheader("Can an estimator recover a known simulated treatment effect?")
     causal = result["causal"]
     st.write(
-        "This tab uses a separate synthetic dataset of simulated individuals. Treatment is assigned depending on "
+        "I use a separate synthetic dataset of simulated individuals in this tab. Treatment is assigned depending on "
         "simulated baseline risk and age, creating confounding. The outcome includes a known treatment effect. "
-        "These estimates are not calculated from the uploaded progression CSV."
+        "I do not calculate these estimates from an uploaded progression CSV."
     )
     causaltable = pd.DataFrame([
         {"method": "Known simulated effect", "estimated effect": causal["known_simulated_effect"]},
@@ -457,15 +477,15 @@ with causal_tab:
     st.caption(
         f"Simulated sample size: {causal['n']:,}. Estimated propensity-score range: "
         f"{causal['propensity_min']:.3f}–{causal['propensity_max']:.3f}. "
-        "This exercise checks estimator behaviour where the data-generating assumptions are known; it does not establish causal identification in real clinical data."
+        "I use this exercise to check estimator behaviour when the data-generating assumptions are known. It does not establish causal identification in real clinical data."
     )
 
 with fairness_tab:
     st.subheader("Descriptive subgroup evaluation")
     st.dataframe(result["fairness"], use_container_width=True, hide_index=True)
     st.warning(
-        "Subgroup metrics are descriptive and are not, by themselves, evidence of fairness. "
-        "For uploaded data, age groups use the training-set median and code groups use the supplied sex_binary values. "
+        "I treat these subgroup metrics as descriptive, not as evidence of fairness. "
+        "For uploaded data, I split age groups at the training-set median and use the supplied sex_binary values as numeric code groups. "
         "Missing demographic fields can produce empty groups. Subgroup counts, uncertainty intervals, clinically appropriate "
         "metrics, and external validation would be required for real research."
     )

@@ -27,6 +27,8 @@ def test_default_simple_table_is_integer_only_and_converts_to_visits():
 
 def test_simple_table_rejects_decimal_values():
     table = make_simple_stage_table()
+    # Pandas 3.x does not allow assigning a float into an integer column.
+    table[STAGE_COLUMNS[0]] = table[STAGE_COLUMNS[0]].astype(float)
     table.loc[0, STAGE_COLUMNS[0]] = 1.5
     with pytest.raises(ValueError, match="whole numbers only"):
         simple_table_to_cohort(table)

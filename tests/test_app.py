@@ -18,7 +18,7 @@ def test_dashboard_renders_and_sample_experiment_completes():
         "Enter simple numbers",
         "Upload CSV",
     ]
-    assert any(button.label == "Download empty CSV template" for button in app.button)
+    assert any(download.label == "Download empty CSV template" for download in app.download_button)
     assert any(slider.label == "Model training rounds" for slider in app.slider)
     assert any(slider.label == "Number of sample people" for slider in app.slider)
 
@@ -55,7 +55,7 @@ def test_beginner_friendly_homepage_explains_data_sources_and_whole_numbers():
         "Enter simple numbers",
         "Upload CSV",
     ]
-    assert any(button.label == "Download empty CSV template" for button in app.button)
+    assert any(download.label == "Download empty CSV template" for download in app.download_button)
     assert any(number_input.label == "Random seed" for number_input in app.number_input)
     # Streamlit's AppTest exposes these element collections separately; do not
     # concatenate ElementList instances (that is unsupported).

@@ -5,7 +5,7 @@
 
 I built this project as an educational machine-learning and research-methods prototype. I use it to demonstrate how a workflow can combine imaging-related numerical features, wearable-style numerical features, and clinical or visit-level information when estimating a participant's stage at their next recorded visit.
 
-The dashboard now places its three starting choices in the centre of the page: try sample data, enter simple whole numbers, or upload a spreadsheet. A first-time visitor can use the pre-filled example or edit a small table without preparing a CSV. The detailed upload option remains available for users who already have numerical features.
+The dashboard groups its data-source choices, empty CSV template download, and experiment settings in the centre of the page. The choices are Synthetic demo, Enter simple numbers, and Upload CSV. A first-time visitor can use the pre-filled example or edit a small table without preparing a CSV. The detailed upload option remains available for users who already have numerical features.
 
 The default experience uses entirely synthetic data. I do not claim that the synthetic data represent a real disease, that the generated relationships are medically established, or that the models are ready for clinical use.
 
@@ -49,7 +49,7 @@ For visitors who do not work with research datasets, I added a simple number-ent
 4. The example starts with 30 artificial rows. You can edit the values, add rows, or download a blank four-column number sheet.
 5. Select **Run with my numbers** to run the example.
 
-The stage numbers are generic category labels. They are not diagnoses, disease severity levels, or a validated medical scale. This quick-entry route uses visit times and stage labels only. It does **not** create scan measurements or wearable-device measurements, so it is not a full multimodal experiment. The same four-column sheet can also be uploaded using **Upload a spreadsheet**.
+The stage numbers are generic category labels. They are not diagnoses, disease severity levels, or a validated medical scale. This quick-entry route uses visit times and stage labels only. It does **not** create scan measurements or wearable-device measurements, so it is not a full multimodal experiment. The same four-column sheet can also be uploaded using **Upload CSV**.
 
 The data-source choices, empty CSV template download, and experiment settings are grouped together in the centre of the homepage, so visitors do not need to use a sidebar. After an experiment runs, a plain-language **Start here: how this demo works** guide appears below the results. The detailed CSV option is for users who already have a longitudinal visit table and, where relevant, pre-computed numerical image or wearable features.
 
@@ -170,9 +170,9 @@ The repeated-seed script writes one CSV with per-run results and another with ag
 
 The homepage offers three choices in the centre of the page:
 
-- **Try sample data:** runs the built-in artificial example. No file is needed.
+- **Synthetic demo:** runs the built-in artificial example. No file is needed.
 - **Enter simple numbers:** lets a visitor edit a compact table with a person number and three stage labels. The blank number sheet uses the same format and can be uploaded again.
-- **Upload a spreadsheet:** accepts either the simple four-column number sheet or a detailed longitudinal CSV.
+- **Upload CSV:** accepts either the simple four-column number sheet or a detailed longitudinal CSV.
 
 For a detailed CSV, the required columns are **patient_id**, **time_months**, and **current_stage**. Optional columns are **age_years**, **sex_binary**, **lab_a**, **lab_b**, **img_0** through **img_7**, and **wear_0** through **wear_5**.
 

@@ -124,6 +124,7 @@ raw_uploaded_frame = None
 uploaded_cohort = None
 simple_cohort = None
 uploaded_file = None
+uploaded_simple = False
 upload_error = None
 simple_error = None
 simple_table = None
@@ -217,9 +218,9 @@ elif data_source == "Simple numbers":
 elif data_source == "Upload CSV":
     st.subheader("Upload an existing spreadsheet")
     st.markdown(
-        "Use this option when you already have a visit-by-visit CSV file. "
-        "The required columns are patient_id, time_months, and current_stage; "
-        "the other numerical feature columns are optional."
+        "You can upload the simple four-column number sheet from the previous option, "
+        "or a detailed visit-by-visit CSV. The detailed format uses patient_id, time_months, "
+        "and current_stage, with optional numerical feature columns."
     )
     st.warning(
         "This public website receives the file you upload. Do not upload names, dates of birth, "
@@ -244,11 +245,24 @@ elif data_source == "Upload CSV":
         uploaded_signature = hashlib.sha256(upload_bytes).hexdigest()
         try:
             raw_uploaded_frame = read_uploaded_csv(upload_bytes)
-            uploaded_cohort = prepare_uploaded_cohort(raw_uploaded_frame)
+            is_simple_number_sheet = all(
+                column in raw_uploaded_frame.columns
+                for column in (PERSON_COLUMN, *STAGE_COLUMNS)
+            )
+            if is_simple_number_sheet:
+                uploaded_cohort = simple_table_to_cohort(raw_uploaded_frame)
+                uploaded_simple = True
+            else:
+                uploaded_cohort = prepare_uploaded_cohort(raw_uploaded_frame)
             n_uploaded_patients = int(uploaded_cohort["patient_id"].nunique())
             st.success(
                 f"File checks passed: {n_uploaded_patients} people and {len(uploaded_cohort)} visit records."
             )
+            if uploaded_simple:
+                st.info(
+                    "I recognised the simple number sheet. This run uses visit times and stage numbers only; "
+                    "it does not include scan or wearable-device measurements."
+                )
             original_columns = {str(column).strip() for column in raw_uploaded_frame.columns}
             ignored_columns = sorted(original_columns - set(UPLOAD_TEMPLATE_COLUMNS))
             if ignored_columns:
@@ -258,9 +272,9 @@ elif data_source == "Upload CSV":
                 )
             image_values = int(uploaded_cohort[IMAGE_COLS].notna().sum().sum())
             wearable_values = int(uploaded_cohort[WEARABLE_COLS].notna().sum().sum())
-            if image_values == 0:
+            if not uploaded_simple and image_values == 0:
                 st.info("No imaging-related numbers were supplied. The image feature group will be empty.")
-            if wearable_values == 0:
+            if not uploaded_simple and wearable_values == 0:
                 st.info("No wearable-related numbers were supplied. The wearable feature group will be empty.")
             if n_uploaded_patients < 30:
                 st.warning("This is a small sample. Results may be unstable and should be treated as exploratory.")
@@ -340,15 +354,17 @@ if run_clicked:
                     epochs=int(epochs),
                     cohort=run_cohort,
                 )
-                if data_source == "Simple numbers":
+                if data_source == "Simple numbers" or uploaded_simple:
                     experiment_result["data_mode"] = "simple_numbers"
             st.session_state["experiment_result"] = experiment_result
             st.session_state["experiment_settings"] = {
-                "data_mode": {
-                    "Synthetic demo": "Sample data",
-                    "Simple numbers": "Numbers entered in the table",
-                    "Upload CSV": "Uploaded spreadsheet",
-                }[data_source],
+                "data_mode": (
+                    "Sample data"
+                    if data_source == "Synthetic demo"
+                    else "Numbers in the simple sheet"
+                    if data_source == "Simple numbers" or uploaded_simple
+                    else "Uploaded spreadsheet"
+                ),
                 "patient_count": int(experiment_result["cohort"]["patient_id"].nunique()),
                 "seed": int(seed),
                 "neural_epochs": int(epochs),

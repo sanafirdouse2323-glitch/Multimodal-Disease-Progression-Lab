@@ -45,6 +45,13 @@ I open the local URL printed in the terminal. The default data source is the syn
 
 ## 5. Run the automated checks
 
+Windows PowerShell:
+
+    $env:PYTHONPATH = "src"
+    python -m pytest -q
+
+macOS or Linux:
+
     PYTHONPATH=src python -m pytest -q
 
 Then I run a small end-to-end synthetic experiment:

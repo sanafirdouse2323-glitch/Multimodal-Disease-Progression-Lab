@@ -85,6 +85,22 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+st.markdown('<div id="how-it-works"></div>', unsafe_allow_html=True)
+with st.expander("How it works", expanded=False):
+    st.markdown(
+        """
+        1. **Choose a data source.** The sample is ready to run. You can also enter whole numbers or upload a CSV.
+        2. **Add visit information.** In the simple table, each person has three stage numbers: month 0, month 6, and month 12.
+        3. **Run the example.** The program uses one visit to estimate the stage number at that person's next recorded visit.
+        4. **Read the results.** The tables and charts compare model outputs. They are learning examples, not medical advice.
+        """
+    )
+    st.markdown(
+        "[Project overview](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab) · "
+        "[Methods and limits](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/blob/main/METHODS_AND_LIMITATIONS.md) · "
+        "[Detailed CSV guide](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/blob/main/UPLOAD_DATA_GUIDE.md)"
+    )
+
 source_to_mode = {
     "Try sample data": "Synthetic demo",
     "Enter simple numbers": "Simple numbers",
@@ -305,22 +321,6 @@ if st.session_state.get("_experiment_input_key") != current_input_key:
     st.session_state.pop("experiment_result", None)
     st.session_state.pop("experiment_settings", None)
     st.session_state["_experiment_input_key"] = current_input_key
-
-st.markdown('<div id="how-it-works"></div>', unsafe_allow_html=True)
-with st.expander("How it works", expanded=False):
-    st.markdown(
-        """
-        1. **Choose a data source.** The sample is ready to run. You can also enter whole numbers or upload a CSV.
-        2. **Add visit information.** In the simple table, each person has three stage numbers: month 0, month 6, and month 12.
-        3. **Run the example.** The program uses one visit to estimate the stage number at that person's next recorded visit.
-        4. **Read the results.** The tables and charts compare model outputs. They are learning examples, not medical advice.
-        """
-    )
-    st.markdown(
-        "[Project overview](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab) · "
-        "[Methods and limits](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/blob/main/METHODS_AND_LIMITATIONS.md) · "
-        "[Detailed CSV guide](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/blob/main/UPLOAD_DATA_GUIDE.md)"
-    )
 
 if data_source == "Upload CSV" and uploaded_file is None:
     st.info("Choose a CSV file above, or start with Enter simple numbers if you do not have a spreadsheet.")

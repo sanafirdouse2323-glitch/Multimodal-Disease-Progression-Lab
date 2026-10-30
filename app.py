@@ -435,28 +435,64 @@ with progression_tab:
          (benchmarks["model"].isin(["Random Forest", "Logistic Regression", "Neural multimodal fusion"])))
         | benchmarks["model"].str.contains("baseline", case=False, na=False)
     ].copy()
-    st.dataframe(fusion_rows, use_container_width=True, hide_index=True)
+    display_rows = fusion_rows.copy()
+    if result.get("data_mode") == "simple_numbers":
+        display_rows["model"] = display_rows["model"].replace({
+            "Neural multimodal fusion": "Neural model",
+        })
+        display_rows["feature_group"] = display_rows["feature_group"].replace({
+            "Multimodal fusion": "Visit and stage numbers only",
+        })
+    display_rows = display_rows.rename(columns={
+        "model": "Method",
+        "feature_group": "Data used",
+        "accuracy": "Correct predictions",
+        "macro_f1": "Balanced score",
+        "n_test_examples": "Examples checked",
+    })
+    display_rows["Correct predictions"] = (display_rows["Correct predictions"] * 100).round(0).astype(int).astype(str) + "%"
+    display_rows["Balanced score"] = (display_rows["Balanced score"] * 100).round(0).astype(int).astype(str) + "%"
+    st.dataframe(display_rows, use_container_width=True, hide_index=True)
+    st.caption("Scores are shown as whole percentages, rounded to the nearest percent.")
+    chart_rows = fusion_rows.copy()
+    chart_rows["balanced_score_percent"] = chart_rows["macro_f1"] * 100
+    if result.get("data_mode") == "simple_numbers":
+        chart_rows["model"] = chart_rows["model"].replace({
+            "Neural multimodal fusion": "Neural model",
+        })
+        chart_rows["feature_group"] = chart_rows["feature_group"].replace({
+            "Multimodal fusion": "Visit and stage numbers only",
+        })
     fig = px.bar(
-        fusion_rows,
+        chart_rows,
         x="model",
-        y="macro_f1",
+        y="balanced_score_percent",
         color="feature_group",
         barmode="group",
-        range_y=[0, 1],
-        title="Held-out macro-F1 (higher is better; compare the same target)"
+        range_y=[0, 100],
+        title="Balanced model score (higher is better)",
     )
+    fig.update_yaxes(title="Balanced score", ticksuffix="%")
     st.plotly_chart(fig, use_container_width=True)
 
     actual_stage = splits.test["target_stage"].astype(int).to_numpy()
     current_stage = splits.test["current_stage"].astype(int).to_numpy()
     actual_change = actual_stage != current_stage
     n_actual_changes = int(actual_change.sum())
-    transition_predictions = {
-        "Persistence baseline": current_stage,
-        "Random Forest (multimodal)": result["random_forest_predictions"],
-        "Logistic Regression (multimodal)": result["logistic_regression_predictions"],
-        "Neural multimodal fusion": result["neural_predictions"],
-    }
+    if result.get("data_mode") == "simple_numbers":
+        transition_predictions = {
+            "Repeat current stage": current_stage,
+            "Random Forest": result["random_forest_predictions"],
+            "Logistic Regression": result["logistic_regression_predictions"],
+            "Neural model": result["neural_predictions"],
+        }
+    else:
+        transition_predictions = {
+            "Persistence baseline": current_stage,
+            "Random Forest (combined data)": result["random_forest_predictions"],
+            "Logistic Regression (combined data)": result["logistic_regression_predictions"],
+            "Neural multimodal fusion": result["neural_predictions"],
+        }
     transition_rows = []
     for model_name, raw_prediction in transition_predictions.items():
         prediction = pd.Series(raw_prediction).to_numpy(dtype=int)
@@ -479,15 +515,29 @@ with progression_tab:
             "change-detection recall": recall,
             "change-detection F1": change_f1,
         })
-    st.subheader("Does a model identify actual stage changes?")
+    st.subheader("Can the model notice when a stage number changes?")
     st.caption(
-        "Overall accuracy can look high when most stages remain unchanged. This table also reports exact next-stage "
-        "accuracy only among windows where a change actually occurred, plus precision/recall for detecting any change. "
-        "These are descriptive synthetic or uploaded-data results, not clinical validation."
+        "This table focuses on visits where the stage number changed, rather than relying only on overall correct predictions. "
+        "The results are examples from the selected data, not clinical validation."
     )
-    st.dataframe(pd.DataFrame(transition_rows), use_container_width=True, hide_index=True)
+    transition_display = pd.DataFrame(transition_rows).rename(columns={
+        "model": "Method",
+        "actual stage-change windows": "Visits where stage changed",
+        "exact next-stage accuracy on changed windows": "Exact next-stage accuracy",
+        "change-detection precision": "Change detection precision",
+        "change-detection recall": "Change detection recall",
+        "change-detection F1": "Change detection score",
+    })
+    for column in (
+        "Exact next-stage accuracy",
+        "Change detection precision",
+        "Change detection recall",
+        "Change detection score",
+    ):
+        transition_display[column] = (transition_display[column] * 100).round(0).astype("Int64").astype(str) + "%"
+    st.dataframe(transition_display, use_container_width=True, hide_index=True)
     history = result["training_history"]
-    if not history.empty:
+    if not history.empty and result.get("data_mode") != "simple_numbers":
         hfig = go.Figure()
         hfig.add_trace(go.Scatter(x=history["epoch"], y=history["train_loss"], mode="lines", name="Training loss"))
         hfig.add_trace(go.Scatter(x=history["epoch"], y=history["validation_macro_f1"], mode="lines", name="Validation macro-F1", yaxis="y2"))
@@ -499,7 +549,8 @@ with progression_tab:
             legend=dict(orientation="h"),
         )
         st.plotly_chart(hfig, use_container_width=True)
-    st.caption("The neural model checkpoint is selected using validation macro-F1. Test labels are not used for training or checkpoint selection.")
+    if result.get("data_mode") != "simple_numbers":
+        st.caption("I select the neural model using validation data. I do not use test labels for training or selection.")
 
 with modalities_tab:
     st.subheader("Which kinds of data were included?")
@@ -554,9 +605,8 @@ with causal_tab:
     st.subheader("Separate practice example: estimating a known effect")
     causal = result["causal"]
     st.write(
-        "I use a separate synthetic dataset of simulated individuals in this tab. Treatment is assigned depending on "
-        "simulated baseline risk and age, creating confounding. The outcome includes a known treatment effect. "
-        "I do not calculate these estimates from an uploaded progression CSV."
+        "I use a separate artificial dataset in this tab. The example includes a known effect so I can compare different estimates. "
+        "I do not calculate these estimates from the visit numbers or spreadsheet you supplied."
     )
     causaltable = pd.DataFrame([
         {"method": "Known simulated effect", "estimated effect": causal["known_simulated_effect"]},
@@ -576,13 +626,16 @@ with causal_tab:
 
 with fairness_tab:
     st.subheader("How did results differ between groups?")
-    st.dataframe(result["fairness"], use_container_width=True, hide_index=True)
-    st.warning(
-        "I treat these subgroup metrics as descriptive, not as evidence of fairness. "
-        "For uploaded data, I split age groups at the training-set median and use the supplied sex_binary values as numeric code groups. "
-        "Missing demographic fields can produce empty groups. Subgroup counts, uncertainty intervals, clinically appropriate "
-        "metrics, and external validation would be required for real research."
-    )
+    if result.get("data_mode") == "simple_numbers":
+        st.info(
+            "The simple number sheet does not include age or group information, so this comparison is not available for this example."
+        )
+    else:
+        st.dataframe(result["fairness"], use_container_width=True, hide_index=True)
+        st.warning(
+            "I treat these group summaries as descriptive, not as evidence of fairness. "
+            "They require suitable group definitions, enough examples, uncertainty estimates, and external validation before research conclusions."
+        )
 
 with data_tab:
     st.subheader("Your visit information")
@@ -595,7 +648,18 @@ with data_tab:
     else:
         st.dataframe(result["cohort"].head(20), use_container_width=True, hide_index=True)
     st.subheader("Visit-to-visit examples")
-    st.dataframe(result["examples"].head(20), use_container_width=True, hide_index=True)
+    if result.get("data_mode") == "simple_numbers":
+        example_columns = ["patient_id", "time_months", "next_interval_months", "current_stage", "target_stage"]
+        examples_display = result["examples"][example_columns].rename(columns={
+            "patient_id": "Person number",
+            "time_months": "Current visit month",
+            "next_interval_months": "Months to next visit",
+            "current_stage": "Current stage number",
+            "target_stage": "Next stage number",
+        })
+        st.dataframe(examples_display.head(20), use_container_width=True, hide_index=True)
+    else:
+        st.dataframe(result["examples"].head(20), use_container_width=True, hide_index=True)
     st.write("**Split sizes (forecast windows)**")
     split_sizes = pd.DataFrame([
         {"split": name, "patients": int(frame["patient_id"].nunique()), "forecast windows": len(frame)}

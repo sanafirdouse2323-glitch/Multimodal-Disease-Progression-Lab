@@ -39,8 +39,8 @@ def test_beginner_friendly_homepage_explains_data_sources_and_whole_numbers():
     assert not app.exception, [exc.message for exc in app.exception]
     rendered_markdown = "\\n".join(item.value for item in app.markdown)
     assert "How it works" in rendered_markdown
-    assert "simple numbers" in rendered_markdown.lower()
-    assert "no decimal points" in rendered_markdown.lower()
+    assert "whole numbers" in rendered_markdown.lower()
+    assert any("no decimal points" in item.value.lower() for item in app.caption)
     assert app.radio[0].options == [
         "Try sample data",
         "Enter simple numbers",

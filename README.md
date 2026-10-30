@@ -53,6 +53,8 @@ The stage numbers are generic category labels. They are not diagnoses, disease s
 
 The **How it works** link appears immediately below the data-source choices on the homepage. The detailed CSV option is for users who already have a longitudinal visit table and, where relevant, pre-computed numerical image or wearable features.
 
+The dashboard also provides separate views for prediction results, data-group comparisons, missing-information checks, a practice simulation, group summaries, and data downloads. On the simple-number route, it clearly marks analyses that cannot be run because scan, wearable, or subgroup information was not supplied. The held-out prediction export includes the Random Forest, Logistic Regression, and neural-model predictions.
+
 ## How I define the prediction task
 
 Each participant has a sequence of visits. For a given visit, the model receives features recorded at that visit and predicts the stage label recorded at the participant's next observed visit.

@@ -48,6 +48,10 @@ def test_beginner_friendly_homepage_explains_data_sources_and_whole_numbers():
     ]
     assert any("not a medical tool" in item.value.lower() for item in app.info)
 
+    app.radio[0].set_value("Enter simple numbers")
+    app.run(timeout=30)
+    assert any("no decimal points" in item.value.lower() for item in app.caption)
+
 
 def test_simple_number_entry_accepts_default_integer_table_and_runs():
     app = AppTest.from_file(str(ROOT / "app.py"), default_timeout=120).run(timeout=30)

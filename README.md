@@ -124,6 +124,13 @@ The requirements file installs CPU-only PyTorch. A GPU is not required for this 
 
 From the repository root, run the automated tests:
 
+Windows PowerShell:
+
+    $env:PYTHONPATH = "src"
+    python -m pytest -q
+
+macOS or Linux:
+
     PYTHONPATH=src python -m pytest -q
 
 Run one reproducible synthetic experiment:

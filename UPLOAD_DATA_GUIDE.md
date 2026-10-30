@@ -1,6 +1,6 @@
 # Using My CSV Upload Option
 
-I designed the homepage so visitors can start in three ways: try sample data, enter simple whole numbers, or upload a spreadsheet. This guide explains the spreadsheet formats. Visitors who do not already have a research CSV can choose **Enter simple numbers** instead.
+The homepage groups its data-source choices, empty CSV template download, and experiment settings in the centre. Visitors can choose Synthetic demo, Enter simple numbers, or Upload CSV. This guide explains the spreadsheet formats. Visitors who do not already have a research CSV can choose **Enter simple numbers** instead.
 
 Please read the privacy and scope notes before uploading anything.
 

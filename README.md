@@ -51,7 +51,7 @@ For visitors who do not work with research datasets, I added a simple number-ent
 
 The stage numbers are generic category labels. They are not diagnoses, disease severity levels, or a validated medical scale. This quick-entry route uses visit times and stage labels only. It does **not** create scan measurements or wearable-device measurements, so it is not a full multimodal experiment. The same four-column sheet can also be uploaded using **Upload a spreadsheet**.
 
-The **How it works** link appears immediately below the data-source choices on the homepage. The detailed CSV option is for users who already have a longitudinal visit table and, where relevant, pre-computed numerical image or wearable features.
+The data-source choices, empty CSV template download, and experiment settings are grouped together in the centre of the homepage, so visitors do not need to use a sidebar. After an experiment runs, a plain-language **Start here: how this demo works** guide appears below the results. The detailed CSV option is for users who already have a longitudinal visit table and, where relevant, pre-computed numerical image or wearable features.
 
 The dashboard also provides separate views for prediction results, data-group comparisons, missing-information checks, a practice simulation, group summaries, and data downloads. On the simple-number route, it clearly marks analyses that cannot be run because scan, wearable, or subgroup information was not supplied. The held-out prediction export includes the Random Forest, Logistic Regression, and neural-model predictions.
 

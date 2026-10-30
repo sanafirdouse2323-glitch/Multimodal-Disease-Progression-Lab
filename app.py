@@ -215,7 +215,8 @@ elif data_source == "Simple numbers":
     st.info(
         "This quick-entry option uses only visit times and stage numbers. It does not include scan measurements "
         "or wearable-device measurements. For a full multimodal comparison, use the spreadsheet option with "
-        "numerical features that have already been prepared."
+        "numerical features that have already been prepared.",
+        icon="ℹ️",
     )
     blank_number_sheet = pd.DataFrame({
         PERSON_COLUMN: list(range(1, 11)),

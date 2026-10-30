@@ -43,7 +43,17 @@ If the deployment does not start or fails, I inspect the Render event and build/
 From the repository root, I run:
 
     python -m pip install -r requirements.txt
+Windows PowerShell:
+
+    $env:PYTHONPATH = "src"
+    python -m pytest -q
+
+macOS or Linux:
+
     PYTHONPATH=src python -m pytest -q
+
+Then I run the smoke experiment on either platform:
+
     python scripts/run_experiment.py --patients 120 --epochs 3 --seed 42 --scenario progression_signal --output smoke-summary.json
     streamlit run app.py
 

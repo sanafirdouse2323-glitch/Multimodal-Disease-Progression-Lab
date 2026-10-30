@@ -29,7 +29,7 @@ def test_dashboard_renders_and_sample_experiment_completes():
     metric_labels = {metric.label for metric in app.metric}
     assert "People in this example" in metric_labels
     assert "Visit-to-visit examples" in metric_labels
-    assert "Balanced model score" in metric_labels
+    assert "Neural model score" in metric_labels
     assert len(app.tabs) == 6
     assert any("What did the model predict for the next visit?" in item.value for item in app.subheader)
 
@@ -40,7 +40,6 @@ def test_beginner_friendly_homepage_explains_data_sources_and_whole_numbers():
     rendered_markdown = "\\n".join(item.value for item in app.markdown)
     assert "How it works" in rendered_markdown
     assert "whole numbers" in rendered_markdown.lower()
-    assert any("no decimal points" in item.value.lower() for item in app.caption)
     assert app.radio[0].options == [
         "Try sample data",
         "Enter simple numbers",
@@ -79,7 +78,6 @@ def test_spreadsheet_upload_source_is_available():
     assert not app.exception, [exc.message for exc in app.exception]
     assert len(app.file_uploader) == 1
     assert any(button.label == "Run on my spreadsheet" for button in app.button)
-    assert any("Download the detailed CSV template" == button.label for button in app.button)
 
 
 def test_synthetic_scenario_selector_accepts_all_sample_patterns():

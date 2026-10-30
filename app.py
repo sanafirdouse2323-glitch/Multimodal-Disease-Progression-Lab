@@ -608,26 +608,32 @@ with missing_tab:
 
 with causal_tab:
     st.subheader("Separate practice example: estimating a known effect")
-    causal = result["causal"]
-    st.write(
-        "I use a separate artificial dataset in this tab. The example includes a known effect so I can compare different estimates. "
-        "I do not calculate these estimates from the visit numbers or spreadsheet you supplied."
-    )
-    causaltable = pd.DataFrame([
-        {"method": "Known simulated effect", "estimated effect": causal["known_simulated_effect"]},
-        {"method": "Unadjusted treated-minus-control", "estimated effect": causal["naive_difference"]},
-        {"method": "Adjusted linear regression", "estimated effect": causal["adjusted_regression"]},
-        {"method": "Inverse-probability weighting", "estimated effect": causal["inverse_probability_weighting"]},
-    ])
-    st.dataframe(causaltable, use_container_width=True, hide_index=True)
-    fig = px.bar(causaltable, x="method", y="estimated effect", title="Synthetic causal-effect estimates (outcome units)")
-    fig.add_hline(y=causal["known_simulated_effect"], line_dash="dash", annotation_text="Known simulated effect")
-    st.plotly_chart(fig, use_container_width=True)
-    st.caption(
-        f"Simulated sample size: {causal['n']:,}. Estimated propensity-score range: "
-        f"{causal['propensity_min']:.3f}–{causal['propensity_max']:.3f}. "
-        "I use this exercise to check estimator behaviour when the data-generating assumptions are known. It does not establish causal identification in real clinical data."
-    )
+    if result.get("data_mode") == "simple_numbers":
+        st.info(
+            "This is an optional research-methods exercise using a separate artificial dataset. "
+            "It is not based on the simple visit numbers you entered, so I have kept its technical calculations out of this beginner-friendly view."
+        )
+    else:
+        causal = result["causal"]
+        st.write(
+            "I use a separate artificial dataset in this tab. The example includes a known effect so I can compare different estimates. "
+            "I do not calculate these estimates from the visit numbers or spreadsheet you supplied."
+        )
+        causaltable = pd.DataFrame([
+            {"method": "Known simulated effect", "estimated effect": causal["known_simulated_effect"]},
+            {"method": "Unadjusted treated-minus-control", "estimated effect": causal["naive_difference"]},
+            {"method": "Adjusted linear regression", "estimated effect": causal["adjusted_regression"]},
+            {"method": "Inverse-probability weighting", "estimated effect": causal["inverse_probability_weighting"]},
+        ])
+        st.dataframe(causaltable, use_container_width=True, hide_index=True)
+        fig = px.bar(causaltable, x="method", y="estimated effect", title="Synthetic causal-effect estimates (outcome units)")
+        fig.add_hline(y=causal["known_simulated_effect"], line_dash="dash", annotation_text="Known simulated effect")
+        st.plotly_chart(fig, use_container_width=True)
+        st.caption(
+            f"Simulated sample size: {causal['n']:,}. Estimated propensity-score range: "
+            f"{causal['propensity_min']:.3f}–{causal['propensity_max']:.3f}. "
+            "I use this exercise to check estimator behaviour when the data-generating assumptions are known. It does not establish causal identification in real clinical data."
+        )
 
 with fairness_tab:
     st.subheader("How did results differ between groups?")

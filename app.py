@@ -23,6 +23,12 @@ from medprogress.data import (  # noqa: E402
     read_uploaded_csv,
 )
 from medprogress.experiment import run_experiment  # noqa: E402
+from medprogress.simple_input import (  # noqa: E402
+    PERSON_COLUMN,
+    STAGE_COLUMNS,
+    make_simple_stage_table,
+    simple_table_to_cohort,
+)
 
 st.set_page_config(
     page_title="Multimodal Disease Progression Lab",
@@ -30,134 +36,249 @@ st.set_page_config(
     layout="wide",
 )
 
-st.title("Multimodal Disease Progression Lab")
-st.caption("A research-methods prototype I built · synthetic demo or uploaded feature-level CSV · not a diagnostic or treatment tool")
 st.markdown(
-    "I built this dashboard to demonstrate a reproducible, feature-level machine-learning workflow for next-observed-visit stage classification. "
-    "Start with the synthetic demo, or read my [project README](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/blob/main/README.md), "
-    "[methods and limitations](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/blob/main/METHODS_AND_LIMITATIONS.md), "
-    "and [CSV upload guide](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/blob/main/UPLOAD_DATA_GUIDE.md). "
-    "**This is a public hosted demo:** do not upload identifiable, confidential, or unauthorised patient data. "
-    "I do not process raw medical images or raw wearable sensor files."
+    """
+    <style>
+      .block-container { max-width: 1220px; padding-top: 2rem; padding-bottom: 3rem; }
+      h1 { text-align: center; letter-spacing: -0.035em; }
+      .intro-copy { max-width: 850px; margin: 0 auto 1rem auto; text-align: center; }
+      .how-link { text-align: center; margin: 0.2rem 0 1rem 0; font-size: 1rem; }
+      .how-link a { font-weight: 650; text-decoration: none; }
+    </style>
+    """,
+    unsafe_allow_html=True,
 )
 
-with st.expander("Start here: how this demo works", expanded=True):
+st.title("Multimodal Disease Progression Lab")
+st.markdown(
+    """
+    <div class="intro-copy">
+      <p><strong>Explore how a few simple numbers can describe changes from one visit to the next.</strong></p>
+      <p>You can try the ready-made example, enter whole numbers yourself, or upload a spreadsheet.
+      You do not need a research background to try the sample.</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+st.info(
+    "This is an educational software demonstration, not a medical tool. "
+    "The sample numbers are artificial. Do not enter names, medical record numbers, or confidential health information."
+)
+
+with st.container(border=True):
+    st.markdown("<h3 style='text-align:center; margin-bottom:0.2rem;'>Choose your data source</h3>", unsafe_allow_html=True)
     st.markdown(
-        """
-### What is this page?
-I built this dashboard as an educational research-methods prototype. It demonstrates a workflow that uses information recorded at one visit to estimate the stage label recorded at a participant's next observed visit. The default mode creates artificial example records; it does not use real patient data.
-
-### How to run your first experiment
-1. Leave **Synthetic demo** selected in the left-hand **Data source** menu.
-2. Keep the default settings for an initial run.
-3. Choose one of the three synthetic scenarios, or leave **Progression signal present** selected.
-4. Click **Run full experiment** in the left sidebar.
-5. When the run finishes, explore the six result tabs. You do not need to upload a file to try the dashboard.
-
-### What does “next visit” mean?
-I predict the label recorded at the next observed visit, not at a fixed future date. For example, if a participant has stage code **1** at month **6** and stage code **2** at month **12**, the month-6 row has target code **2**. Visit gaps can vary, so this is not automatically a 6-month or 12-month forecast. Codes 0–3 are generic labels; their medical meaning must be defined by the dataset owner. This example is artificial, not a real patient record.
-
-### What information does my prototype use?
-I organise the numerical inputs into three broad groups:
-- **Imaging-related features:** eight precomputed values, named img_0 to img_7. I do not load or analyse MRI, X-ray, or other raw image files.
-- **Wearable-style features:** six precomputed values, named wear_0 to wear_5. I do not process raw wearable sensor recordings.
-- **Clinical and visit information:** age, an optional numeric group code, two generic measurement fields, current stage, visit gap, and indicators for missing imaging or wearable groups.
-
-In synthetic mode, the generator creates all these values. For CSV uploads, the imaging and wearable columns must already contain numerical features prepared outside this app.
-
-### Why did I add three synthetic scenarios?
-I use three controlled settings to make the assumptions visible:
-
-- **Progression signal present:** I plant a hidden, stable patient-level tendency that affects the probability of an upward stage transition. The generated imaging-related, wearable-style, and laboratory measurements contain noisy traces of that tendency.
-- **No additional progression signal:** transitions follow stage-dependent random rules, without a patient-specific progression tendency reflected in the measurements. This is my negative-control scenario.
-- **Difficult:** I weaken the planted feature signal, increase measurement noise, and make imaging and wearable feature groups missing more often.
-
-These are artificial software test conditions, not medically validated disease mechanisms. The hidden tendency is not given directly to the models. Planting a relationship in synthetic data does not establish that the same relationship exists in real patients. I always compare model results with the persistence baseline.
-
-### Which models and baselines did I implement?
-I compare a persistence baseline (predict the current stage again), a majority-class baseline, Random Forest, Logistic Regression, and a small PyTorch neural multimodal fusion model. I also compare Random Forest and Logistic Regression across imaging-only, wearable-only, clinical/temporal, and combined feature groups.
-
-For the neural model, I use separate small encoders for the three feature groups and combine their representations before predicting one of four stage labels. I fit the neural preprocessing on training data and select the checkpoint using validation macro-F1.
-
-### What do the six result tabs show?
-1. **Progression models:** I compare held-out next-visit predictions with the actual next-visit labels and simpler baselines. I also show exact next-stage accuracy on windows where a stage change occurred, plus precision, recall, and F1 for detecting any change.
-2. **Modality comparison:** I compare imaging-related, wearable-style, clinical/temporal, and combined feature groups.
-3. **Missing data:** I train a Random Forest on the original training data, then mask whole modalities additionally at test time. This is a controlled stress test, not proof of robustness to every real-world missing-data pattern.
-4. **Causal simulation:** I compare estimators on a separate synthetic dataset where the treatment effect is known by construction. I do not estimate treatment effects from an uploaded progression CSV.
-5. **Subgroup evaluation:** I report descriptive scores for available age groups and numeric code groups. These results alone do not establish fairness.
-6. **Data and exports:** I show data previews and split sizes, and provide benchmark CSV, held-out prediction CSV, and experiment-summary JSON downloads.
-
-### How to understand the scores
-**Accuracy** is the fraction of held-out predictions that are correct. **Macro-F1** calculates an F1 score for each of the four labels and averages those scores equally. Both range from 0 to 1. I recommend comparing models on the same data split and checking whether a more complex model actually improves on the simpler baselines.
-
-Overall accuracy can be misleading when most labels stay unchanged. That is why I added the changed-stage diagnostics. In my latest repeated-seed synthetic evaluation, the multimodal models did not exceed persistence on mean overall accuracy. A score from simulated data is not evidence of clinical accuracy.
-
-### Can I use my own data?
-1. Choose **Empty CSV template** in the left menu and download the blank file. I provide a header-only template; it is not an editable spreadsheet inside this website.
-2. Enter one row per visit and use the same non-identifying study code for each participant. Fill in time_months and current_stage. Stage codes must be integer labels 0, 1, 2, or 3.
-3. Give every participant at least two visits and use at least 10 unique participant codes. Ten is only the technical minimum for splitting, not a recommended research sample size.
-4. Optional columns are age_years, sex_binary, lab_a, lab_b, img_0 to img_7, and wear_0 to wear_5. The image and wearable columns require precomputed numbers, not pictures or raw streams.
-5. Choose **Upload CSV**, select the completed file, read the validation message and preview, then click **Run full experiment**.
-
-The training partition must also contain at least two different next-visit stage labels. A file can pass structural validation but still fail when an experiment starts if the training labels do not meet this requirement.
-
-### Privacy, scope, and limitations
-The public website receives files uploaded through the browser. Do not upload names, dates of birth, medical record numbers, identifiable health records, confidential information, or data you are not authorised to use. For sensitive research data, use an approved secure environment.
-
-I built this as a methods and software demonstration. It does not diagnose, recommend treatment, establish causality in real data, prove fairness, or validate a clinical prediction system. I explain the accepted CSV schema in the [upload guide](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/blob/main/UPLOAD_DATA_GUIDE.md), the implementation in the [methods and limitations note](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/blob/main/METHODS_AND_LIMITATIONS.md), and the complete project in the [README](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/blob/main/README.md). This prototype is not a diagnostic tool.
-        """
+        "<p style='text-align:center;'>Start with sample data, enter a few whole numbers, or use an existing spreadsheet.</p>",
+        unsafe_allow_html=True,
     )
-
-with st.sidebar:
-    st.header("Data source")
-    data_source = st.radio(
-        "Choose how to start",
-        ["Synthetic demo", "Upload CSV", "Empty CSV template"],
+    source_choice = st.radio(
+        "Data sources",
+        ["Try sample data", "Enter simple numbers", "Upload a spreadsheet"],
         index=0,
+        horizontal=True,
+        label_visibility="collapsed",
         key="data_source_mode",
     )
+
+st.markdown(
+    '<p class="how-link"><a href="#how-it-works">How it works ↓</a></p>',
+    unsafe_allow_html=True,
+)
+
+source_to_mode = {
+    "Try sample data": "Synthetic demo",
+    "Enter simple numbers": "Simple numbers",
+    "Upload a spreadsheet": "Upload CSV",
+}
+data_source = source_to_mode[source_choice]
+
+with st.sidebar:
+    st.header("Optional settings")
+    seed = st.number_input("Random seed", min_value=0, max_value=99999, value=42, step=1)
+    epochs = st.slider("Model training rounds", min_value=5, max_value=40, value=20, step=5)
+    patient_count = 400
     synthetic_scenario = "progression_signal"
     if data_source == "Synthetic demo":
+        patient_count = st.slider(
+            "Number of sample people",
+            min_value=120,
+            max_value=800,
+            value=400,
+            step=40,
+            help="This changes the size of the artificial sample, not real patient data.",
+        )
         scenario_labels = {
-            "Progression signal present": "progression_signal",
-            "No additional progression signal": "no_signal",
-            "Difficult: weak signal and more missing data": "difficult",
+            "Example with a pattern (recommended)": "progression_signal",
+            "Example without an extra pattern": "no_signal",
+            "More difficult example": "difficult",
         }
         selected_scenario_label = st.selectbox(
-            "Synthetic data scenario",
+            "Sample data pattern",
             options=list(scenario_labels),
             index=0,
-            help=(
-                "These are artificial test conditions. The progression-signal scenario deliberately plants "
-                "a noisy relationship for benchmarking; it is not a medical claim."
-            ),
+            help="These are artificial test settings, not medical facts.",
         )
         synthetic_scenario = scenario_labels[selected_scenario_label]
-    uploaded_file = None
-    if data_source == "Upload CSV":
-        st.warning(
-            "Public demo privacy warning: do not upload names, dates of birth, medical record numbers, "
-            "identifiable health records, or data you are not authorised to use."
-        )
-        uploaded_file = st.file_uploader("Upload a completed longitudinal CSV", type=["csv"], max_upload_size=20)
 
 raw_uploaded_frame = None
 uploaded_cohort = None
+simple_cohort = None
+uploaded_file = None
 upload_error = None
+simple_error = None
+simple_table = None
 uploaded_signature = "no-file"
-if data_source == "Upload CSV" and uploaded_file is not None:
-    upload_bytes = uploaded_file.getvalue()
-    uploaded_signature = hashlib.sha256(upload_bytes).hexdigest()
-    try:
-        raw_uploaded_frame = read_uploaded_csv(upload_bytes)
-        uploaded_cohort = prepare_uploaded_cohort(raw_uploaded_frame)
-    except Exception as exc:
-        upload_error = f"{type(exc).__name__}: {exc}"
 
 if data_source == "Synthetic demo":
+    st.subheader("Ready-to-use sample")
+    st.markdown(
+        "I have prepared an artificial example for you. No file or personal information is needed. "
+        "Use the default settings to see how the dashboard works."
+    )
+    st.success("Sample data are ready. These are generated example records, not real people.")
+
+elif data_source == "Simple numbers":
+    st.subheader("Enter a few whole numbers")
+    st.markdown(
+        "Each row is one person. Enter the stage number recorded at month 0, month 6, and month 12. "
+        "The example is already filled in, so you can run it first or change the numbers."
+    )
+    st.caption(
+        "Use whole numbers only—no decimal points. Stage numbers must be 0, 1, 2, or 3. "
+        "They are category labels for this demonstration, not diagnoses or a universal measure of health."
+    )
+    simple_table = st.data_editor(
+        make_simple_stage_table(),
+        key="simple_number_table",
+        num_rows="dynamic",
+        hide_index=True,
+        use_container_width=True,
+        column_config={
+            PERSON_COLUMN: st.column_config.NumberColumn(
+                "Person number",
+                help="Use a different positive whole number for each person.",
+                min_value=1,
+                max_value=9999,
+                step=1,
+                format="%d",
+            ),
+            STAGE_COLUMNS[0]: st.column_config.NumberColumn(
+                "Stage at month 0",
+                min_value=0,
+                max_value=3,
+                step=1,
+                format="%d",
+            ),
+            STAGE_COLUMNS[1]: st.column_config.NumberColumn(
+                "Stage at month 6",
+                min_value=0,
+                max_value=3,
+                step=1,
+                format="%d",
+            ),
+            STAGE_COLUMNS[2]: st.column_config.NumberColumn(
+                "Stage at month 12",
+                min_value=0,
+                max_value=3,
+                step=1,
+                format="%d",
+            ),
+        },
+    )
+    try:
+        simple_cohort = simple_table_to_cohort(simple_table)
+        st.success(
+            f"Your table is ready: {simple_cohort['patient_id'].nunique()} people and "
+            f"{len(simple_cohort)} visit records."
+        )
+    except ValueError as exc:
+        simple_error = str(exc)
+        st.warning(simple_error)
+
+    st.info(
+        "This quick-entry option uses only visit times and stage numbers. It does not include scan measurements "
+        "or wearable-device measurements. For a full multimodal comparison, use the spreadsheet option with "
+        "numerical features that have already been prepared."
+    )
+    blank_number_sheet = pd.DataFrame({
+        PERSON_COLUMN: list(range(1, 11)),
+        STAGE_COLUMNS[0]: [pd.NA] * 10,
+        STAGE_COLUMNS[1]: [pd.NA] * 10,
+        STAGE_COLUMNS[2]: [pd.NA] * 10,
+    })
+    st.download_button(
+        "Download a blank number sheet",
+        data=blank_number_sheet.to_csv(index=False).encode("utf-8"),
+        file_name="simple_stage_numbers_template.csv",
+        mime="text/csv",
+        help="A simple four-column sheet with one row per person.",
+    )
+
+elif data_source == "Upload CSV":
+    st.subheader("Upload an existing spreadsheet")
+    st.markdown(
+        "Use this option when you already have a visit-by-visit CSV file. "
+        "The required columns are patient_id, time_months, and current_stage; "
+        "the other numerical feature columns are optional."
+    )
+    st.warning(
+        "This public website receives the file you upload. Do not upload names, dates of birth, "
+        "medical record numbers, identifiable health records, confidential information, or data "
+        "you are not authorised to use."
+    )
+    uploaded_file = st.file_uploader(
+        "Choose a CSV file",
+        type=["csv"],
+        max_upload_size=20,
+        help="Maximum file size: 20 MB.",
+    )
+    st.download_button(
+        "Download the detailed CSV template",
+        data=empty_upload_template().to_csv(index=False).encode("utf-8"),
+        file_name="longitudinal_upload_template.csv",
+        mime="text/csv",
+        help="This template is for users who already have numerical feature columns.",
+    )
+    if uploaded_file is not None:
+        upload_bytes = uploaded_file.getvalue()
+        uploaded_signature = hashlib.sha256(upload_bytes).hexdigest()
+        try:
+            raw_uploaded_frame = read_uploaded_csv(upload_bytes)
+            uploaded_cohort = prepare_uploaded_cohort(raw_uploaded_frame)
+            n_uploaded_patients = int(uploaded_cohort["patient_id"].nunique())
+            st.success(
+                f"File checks passed: {n_uploaded_patients} people and {len(uploaded_cohort)} visit records."
+            )
+            original_columns = {str(column).strip() for column in raw_uploaded_frame.columns}
+            ignored_columns = sorted(original_columns - set(UPLOAD_TEMPLATE_COLUMNS))
+            if ignored_columns:
+                st.warning(
+                    "These extra columns are not used and will be ignored: "
+                    + ", ".join('"' + column + '"' for column in ignored_columns)
+                )
+            image_values = int(uploaded_cohort[IMAGE_COLS].notna().sum().sum())
+            wearable_values = int(uploaded_cohort[WEARABLE_COLS].notna().sum().sum())
+            if image_values == 0:
+                st.info("No imaging-related numbers were supplied. The image feature group will be empty.")
+            if wearable_values == 0:
+                st.info("No wearable-related numbers were supplied. The wearable feature group will be empty.")
+            if n_uploaded_patients < 30:
+                st.warning("This is a small sample. Results may be unstable and should be treated as exploratory.")
+            st.caption(
+                "The file checks confirm its structure only. They do not confirm medical suitability or scientific validity."
+            )
+        except Exception as exc:
+            upload_error = f"{type(exc).__name__}: {exc}"
+            st.error(f"I could not read this spreadsheet: {upload_error}")
+            st.caption("Check the required column names and number formats, then try again.")
+
+# A stable input signature prevents results from an older source or edited table being shown.
+if data_source == "Synthetic demo":
     current_input_key = f"synthetic-demo:{synthetic_scenario}"
-elif data_source == "Empty CSV template":
-    current_input_key = "empty-csv-template"
+elif data_source == "Simple numbers":
+    table_text = simple_table.to_csv(index=False) if simple_table is not None else "no-table"
+    simple_signature = hashlib.sha256(table_text.encode("utf-8")).hexdigest()
+    current_input_key = f"simple-numbers:{simple_signature}"
 else:
     current_input_key = f"uploaded-csv:{uploaded_signature}"
 
@@ -166,121 +287,68 @@ if st.session_state.get("_experiment_input_key") != current_input_key:
     st.session_state.pop("experiment_settings", None)
     st.session_state["_experiment_input_key"] = current_input_key
 
-with st.sidebar:
-    st.header("Experiment settings")
-    if data_source == "Synthetic demo":
-        patient_count = st.slider("Synthetic patients", min_value=120, max_value=800, value=400, step=40)
-    else:
-        patient_count = 400
-    seed = st.number_input("Random seed", min_value=0, max_value=99999, value=42, step=1)
-    epochs = st.slider("Neural fusion epochs", min_value=5, max_value=40, value=20, step=5)
-    if data_source == "Synthetic demo":
-        st.info("Every patient, visit, feature, outcome, and treatment in this demo is simulated.")
-    elif data_source == "Upload CSV":
-        st.caption("The uploaded cohort is used for the progression models. The causal-effect tab remains a separate synthetic simulation.")
-    else:
-        st.caption("Download the blank template, fill it with one row per visit, then switch to Upload CSV.")
-    can_run = data_source == "Synthetic demo" or (
-        data_source == "Upload CSV" and uploaded_cohort is not None
-    )
-    run_clicked = st.button(
-        "Run full experiment",
-        type="primary",
-        use_container_width=True,
-        disabled=not can_run,
-    )
-
-def render_blank_template_download(button_label: str = "Download blank CSV template") -> None:
-    """Offer a header-only CSV so users can create a correctly named input file."""
-    template = empty_upload_template()
-    st.download_button(
-        button_label,
-        data=template.to_csv(index=False).encode("utf-8"),
-        file_name="longitudinal_upload_template.csv",
-        mime="text/csv",
-        key=f"template-download-{button_label}",
-    )
-
-if data_source == "Empty CSV template":
-    st.subheader("Start with an empty data shell")
-    st.write(
-        "I provide a header-only CSV so you can enter one row per visit and then choose **Upload CSV**. "
-        "I keep the template intentionally empty: it contains column names but no participant records."
-    )
-    render_blank_template_download()
+st.markdown('<div id="how-it-works"></div>', unsafe_allow_html=True)
+with st.expander("How it works", expanded=False):
     st.markdown(
-        "**Required columns:** patient_id, time_months, current_stage. "
-        "**Optional numeric columns:** age_years, sex_binary, lab_a, lab_b, "
-        "img_0–img_7, and wear_0–wear_5."
+        """
+        1. **Choose a data source.** The sample is ready to run. You can also enter whole numbers or upload a CSV.
+        2. **Add visit information.** In the simple table, each person has three stage numbers: month 0, month 6, and month 12.
+        3. **Run the example.** The program uses one visit to estimate the stage number at that person's next recorded visit.
+        4. **Read the results.** The tables and charts compare model outputs. They are learning examples, not medical advice.
+        """
     )
     st.markdown(
-        "- patient_id: a non-identifying study code, not a person's name or medical record number.\n"
-        "- time_months: numeric months since that patient's baseline visit.\n"
-        "- current_stage: integer label 0, 1, 2, or 3 at each visit. Map your labels to these codes before upload.\n"
-        "- Optional columns may be blank. Imaging and wearable columns are already-extracted numerical features, not raw scans or sensor streams.\n"
-        "- Each patient needs at least two visits; the file needs at least 10 unique patients for the split. More data are normally needed for stable research estimates.\n"
-        "- sex_binary, if supplied, must use consistent numeric codes 0 and 1; these codes are interpreted only as groups for this demo."
+        "[Project overview](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab) · "
+        "[Methods and limits](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/blob/main/METHODS_AND_LIMITATIONS.md) · "
+        "[Detailed CSV guide](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/blob/main/UPLOAD_DATA_GUIDE.md)"
     )
-    st.warning(
-        "Privacy: this public Render app receives the uploaded file. Do not upload identifiable or confidential health data. "
-        "For authorised sensitive datasets, run the project locally inside an approved secure environment."
-    )
-    st.stop()
 
-if data_source == "Upload CSV":
-    if uploaded_file is None:
-        st.info("Upload a completed CSV, or download the blank template below to prepare your data first.")
-        render_blank_template_download()
-        st.stop()
-    if upload_error is not None:
-        st.error(f"CSV validation failed: {upload_error}")
-        st.write("Check the required columns and value formats, then upload the corrected file.")
-        render_blank_template_download()
-        st.stop()
+if data_source == "Upload CSV" and uploaded_file is None:
+    st.info("Choose a CSV file above, or start with Enter simple numbers if you do not have a spreadsheet.")
 
-    n_uploaded_patients = int(uploaded_cohort["patient_id"].nunique())
-    st.success(
-        f"CSV format checks passed: {n_uploaded_patients} patients and {len(uploaded_cohort)} visit rows."
-    )
-    original_columns = {str(column).strip() for column in raw_uploaded_frame.columns}
-    ignored_columns = sorted(original_columns - set(UPLOAD_TEMPLATE_COLUMNS))
-    if ignored_columns:
-        st.warning(
-            "These extra columns are not used by this model and will be ignored: "
-            + ", ".join('"' + column + '"' for column in ignored_columns)
-        )
-    image_values = int(uploaded_cohort[IMAGE_COLS].notna().sum().sum())
-    wearable_values = int(uploaded_cohort[WEARABLE_COLS].notna().sum().sum())
-    if image_values == 0:
-        st.warning("No numerical imaging-related feature values were found. The imaging feature group will contain no information.")
-    if wearable_values == 0:
-        st.warning("No numerical wearable-style feature values were found. The wearable feature group will contain no information.")
-    if n_uploaded_patients < 30:
-        st.warning("This is a small cohort. Metrics may be unstable and should be treated as exploratory.")
-    st.info(
-        "I check the table structure, not whether a dataset is clinically appropriate or scientifically valid. "
-        "I use uploaded tabular data for progression, modality, added-missingness, and subgroup analyses; the causal-effect tab uses a separate synthetic dataset."
-    )
+run_cohort = simple_cohort if data_source == "Simple numbers" else uploaded_cohort
+can_run = data_source == "Synthetic demo" or run_cohort is not None
+button_labels = {
+    "Synthetic demo": "Run sample experiment",
+    "Simple numbers": "Run with my numbers",
+    "Upload CSV": "Run on my spreadsheet",
+}
+run_clicked = st.button(
+    button_labels[data_source],
+    type="primary",
+    use_container_width=True,
+    disabled=not can_run,
+)
 
 if run_clicked:
     with st.spinner(
-        "Generating synthetic visits, fitting models, and evaluating held-out patients…"
+        "Preparing the sample and running the models…"
         if data_source == "Synthetic demo"
-        else "Preparing uploaded visits, fitting models, and evaluating held-out patients…"
+        else "Checking the numbers and running the models…"
     ):
         try:
             if data_source == "Synthetic demo":
                 experiment_result = run_experiment(
-                    n_patients=int(patient_count), seed=int(seed), epochs=int(epochs),
+                    n_patients=int(patient_count),
+                    seed=int(seed),
+                    epochs=int(epochs),
                     scenario=synthetic_scenario,
                 )
             else:
                 experiment_result = run_experiment(
-                    seed=int(seed), epochs=int(epochs), cohort=uploaded_cohort
+                    seed=int(seed),
+                    epochs=int(epochs),
+                    cohort=run_cohort,
                 )
+                if data_source == "Simple numbers":
+                    experiment_result["data_mode"] = "simple_numbers"
             st.session_state["experiment_result"] = experiment_result
             st.session_state["experiment_settings"] = {
-                "data_mode": "Synthetic demo" if data_source == "Synthetic demo" else "Uploaded CSV",
+                "data_mode": {
+                    "Synthetic demo": "Sample data",
+                    "Simple numbers": "Numbers entered in the table",
+                    "Upload CSV": "Uploaded spreadsheet",
+                }[data_source],
                 "patient_count": int(experiment_result["cohort"]["patient_id"].nunique()),
                 "seed": int(seed),
                 "neural_epochs": int(epochs),
@@ -289,32 +357,25 @@ if run_clicked:
         except ValueError as exc:
             st.error(str(exc))
         except Exception as exc:
-            st.error(f"Experiment failed: {type(exc).__name__}: {exc}")
+            st.error(f"The experiment could not finish: {type(exc).__name__}: {exc}")
             st.exception(exc)
 
 result = st.session_state.get("experiment_result")
 if result is None:
-    if data_source == "Upload CSV" and uploaded_cohort is not None:
-        st.subheader("Uploaded dataset preview")
-        st.write(
-            "I have checked the CSV structure. Click **Run full experiment** in the sidebar to fit the models. "
-            "My validator checks format only; it does not assess clinical suitability or approve a research analysis."
-        )
+    if data_source == "Simple numbers" and simple_table is not None:
+        st.subheader("Your number table")
+        st.caption("The table above is the input. The program turns each person into three visit records.")
+    elif data_source == "Upload CSV" and uploaded_cohort is not None:
+        st.subheader("Spreadsheet preview")
         st.dataframe(uploaded_cohort.head(10), use_container_width=True, hide_index=True)
     else:
-        st.info("Choose settings in the sidebar and select **Run full experiment**. I will then fit the models and display the results for the selected data source.")
-        st.subheader("What this demo contains")
-        cards = st.columns(3)
-        cards[0].metric("Modalities", "3", "Imaging-related, wearable-style, clinical-style")
-        cards[1].metric("Stage labels", "4", "User-mapped labels: 0–3")
-        cards[2].metric("Research themes", "5", "Progression, fusion, missingness, causal, fairness")
-        st.markdown(
-            "**Interpretation rule:** synthetic performance is only a software and methodology demonstration. "
-            "It is not medical evidence, and results should not be presented as clinical performance."
-        )
+        st.markdown("### Ready when you are")
+        st.write("Choose a data source above, then use the button to run the example.")
     st.stop()
 
 splits = result["splits"]
+
+
 benchmarks = result["benchmarks"]
 settings = st.session_state.get("experiment_settings", {})
 

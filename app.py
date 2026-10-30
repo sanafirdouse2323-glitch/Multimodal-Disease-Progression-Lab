@@ -87,7 +87,7 @@ For the neural model, I use separate small encoders for the three feature groups
 5. **Subgroup evaluation:** I report descriptive scores for available age groups and numeric code groups. These results alone do not establish fairness.
 6. **Data and exports:** I show data previews and split sizes, and provide benchmark CSV, held-out prediction CSV, and experiment-summary JSON downloads.
 
-### How should I understand the scores?
+### How to understand the scores
 **Accuracy** is the fraction of held-out predictions that are correct. **Macro-F1** calculates an F1 score for each of the four labels and averages those scores equally. Both range from 0 to 1. I recommend comparing models on the same data split and checking whether a more complex model actually improves on the simpler baselines.
 
 Overall accuracy can be misleading when most labels stay unchanged. That is why I added the changed-stage diagnostics. In my latest repeated-seed synthetic evaluation, the multimodal models did not exceed persistence on mean overall accuracy. A score from simulated data is not evidence of clinical accuracy.

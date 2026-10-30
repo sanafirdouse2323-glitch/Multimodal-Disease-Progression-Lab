@@ -204,8 +204,8 @@ def render_blank_template_download(button_label: str = "Download blank CSV templ
 if data_source == "Empty CSV template":
     st.subheader("Start with an empty data shell")
     st.write(
-        "Download a header-only CSV, enter one row per patient visit, and then choose **Upload CSV**. "
-        "The template is intentionally empty; it contains column names but no patient records."
+        "I provide a header-only CSV so you can enter one row per visit and then choose **Upload CSV**. "
+        "I keep the template intentionally empty: it contains column names but no participant records."
     )
     render_blank_template_download()
     st.markdown(
@@ -258,8 +258,8 @@ if data_source == "Upload CSV":
     if n_uploaded_patients < 30:
         st.warning("This is a small cohort. Metrics may be unstable and should be treated as exploratory.")
     st.info(
-        "Format validation checks the table structure, not whether a dataset is clinically appropriate or scientifically valid. "
-        "Uploaded tabular data are used for progression, missingness, and subgroup analyses; the causal-effect tab uses a separate synthetic dataset."
+        "I check the table structure, not whether a dataset is clinically appropriate or scientifically valid. "
+        "I use uploaded tabular data for progression, modality, added-missingness, and subgroup analyses; the causal-effect tab uses a separate synthetic dataset."
     )
 
 if run_clicked:
@@ -297,12 +297,12 @@ if result is None:
     if data_source == "Upload CSV" and uploaded_cohort is not None:
         st.subheader("Uploaded dataset preview")
         st.write(
-            "The CSV passed basic schema checks. Click **Run full experiment** in the sidebar to train the models. "
-            "The validator does not assess clinical suitability or approve a research analysis."
+            "I have checked the CSV structure. Click **Run full experiment** in the sidebar to fit the models. "
+            "My validator checks format only; it does not assess clinical suitability or approve a research analysis."
         )
         st.dataframe(uploaded_cohort.head(10), use_container_width=True, hide_index=True)
     else:
-        st.info("Choose settings in the sidebar and select **Run full experiment** to train models and create results.")
+        st.info("Choose settings in the sidebar and select **Run full experiment**. I will then fit the models and display the results for the selected data source.")
         st.subheader("What this demo contains")
         cards = st.columns(3)
         cards[0].metric("Modalities", "3", "Imaging-related, wearable-style, clinical-style")
@@ -345,8 +345,8 @@ progression_tab, modalities_tab, missing_tab, causal_tab, fairness_tab, data_tab
 with progression_tab:
     st.subheader("Next-observed-visit stage classification")
     st.write(
-        "Models use current-visit measurements to predict the stage at the patient's next observed visit. "
-        "Visit gaps are irregular, so this is not a fixed-horizon forecast."
+        "I use current-visit measurements to predict the stage recorded at the participant's next observed visit. "
+        "Visit gaps can be irregular, so I do not describe this as a fixed-horizon forecast."
     )
     fusion_rows = benchmarks[
         ((benchmarks["feature_group"] == "Multimodal fusion") &
@@ -433,14 +433,14 @@ with modalities_tab:
     )
     st.plotly_chart(fig, use_container_width=True)
     st.dataframe(classic, use_container_width=True, hide_index=True)
-    st.info("This is an ablation-style comparison, not proof of clinical benefit. Random variation and synthetic data design can strongly affect the ordering.")
+    st.info("I use this as an ablation-style comparison of feature groups. It is not proof of clinical benefit, and random variation or synthetic data design can strongly affect the ordering.")
 
 with missing_tab:
     st.subheader("Additional missing-modality stress test")
     miss = result["missingness"].copy()
     st.write(
-        "A random forest is trained on the original training split. At evaluation time, additional whole-modality "
-        "dropout is injected into test features and modality-missing flags are updated. The model is not retrained "
+        "I train a Random Forest on the original training split. At evaluation time, additional whole-modality "
+        "I add dropout to the test features and update the modality-missing flags. The model is not retrained "
         "for each dropout rate."
     )
     st.dataframe(miss, use_container_width=True, hide_index=True)
@@ -460,9 +460,9 @@ with causal_tab:
     st.subheader("Can an estimator recover a known simulated treatment effect?")
     causal = result["causal"]
     st.write(
-        "This tab uses a separate synthetic dataset of simulated individuals. Treatment is assigned depending on "
+        "I use a separate synthetic dataset of simulated individuals in this tab. Treatment is assigned depending on "
         "simulated baseline risk and age, creating confounding. The outcome includes a known treatment effect. "
-        "These estimates are not calculated from the uploaded progression CSV."
+        "I do not calculate these estimates from an uploaded progression CSV."
     )
     causaltable = pd.DataFrame([
         {"method": "Known simulated effect", "estimated effect": causal["known_simulated_effect"]},
@@ -477,15 +477,15 @@ with causal_tab:
     st.caption(
         f"Simulated sample size: {causal['n']:,}. Estimated propensity-score range: "
         f"{causal['propensity_min']:.3f}–{causal['propensity_max']:.3f}. "
-        "This exercise checks estimator behaviour where the data-generating assumptions are known; it does not establish causal identification in real clinical data."
+        "I use this exercise to check estimator behaviour when the data-generating assumptions are known. It does not establish causal identification in real clinical data."
     )
 
 with fairness_tab:
     st.subheader("Descriptive subgroup evaluation")
     st.dataframe(result["fairness"], use_container_width=True, hide_index=True)
     st.warning(
-        "Subgroup metrics are descriptive and are not, by themselves, evidence of fairness. "
-        "For uploaded data, age groups use the training-set median and code groups use the supplied sex_binary values. "
+        "I treat these subgroup metrics as descriptive, not as evidence of fairness. "
+        "For uploaded data, I split age groups at the training-set median and use the supplied sex_binary values as numeric code groups. "
         "Missing demographic fields can produce empty groups. Subgroup counts, uncertainty intervals, clinically appropriate "
         "metrics, and external validation would be required for real research."
     )

@@ -380,35 +380,40 @@ benchmarks = result["benchmarks"]
 settings = st.session_state.get("experiment_settings", {})
 
 c1, c2, c3, c4 = st.columns(4)
-c1.metric("Synthetic patients" if result.get("data_mode") == "synthetic" else "Uploaded patients", f"{len(result['cohort']['patient_id'].unique()):,}")
-c2.metric("Forecast examples", f"{len(result['examples']):,}")
-c3.metric("Held-out test windows", f"{len(splits.test):,}")
-c4.metric("Neural fusion macro-F1", f"{result['neural_metrics']['macro_f1']:.3f}")
+c1.metric("People in this example", f"{len(result['cohort']['patient_id'].unique()):,}")
+c2.metric("Visit-to-visit examples", f"{len(result['examples']):,}")
+c3.metric("Examples checked", f"{len(splits.test):,}")
+c4.metric("Balanced model score", f"{result['neural_metrics']['macro_f1']:.3f}")
 scenario_caption = (
-    f" · Synthetic scenario: {settings.get('synthetic_scenario')}"
+    f" · Sample pattern: {settings.get('synthetic_scenario')}"
     if result.get("data_mode") == "synthetic" else ""
 )
 st.caption(
-    f"Data mode: {settings.get('data_mode', 'Synthetic demo')}{scenario_caption} · Seed {settings.get('seed', seed)} · "
-    f"{settings.get('neural_epochs', epochs)} neural epochs · patient-level split "
-    "(60% train / 20% validation / 20% test)."
+    f"Data source: {settings.get('data_mode', 'Sample data')}{scenario_caption}. "
+    "The results are educational examples, not medical predictions."
 )
 
 progression_tab, modalities_tab, missing_tab, causal_tab, fairness_tab, data_tab = st.tabs([
-    "Progression models",
-    "Modality comparison",
-    "Missing data",
-    "Causal simulation",
-    "Subgroup evaluation",
-    "Data and exports",
+    "Prediction results",
+    "Data groups",
+    "Missing information",
+    "Practice simulation",
+    "Group summaries",
+    "My data and downloads",
 ])
 
 with progression_tab:
-    st.subheader("Next-observed-visit stage classification")
-    st.write(
-        "I use current-visit measurements to predict the stage recorded at the participant's next observed visit. "
-        "Visit gaps can be irregular, so I do not describe this as a fixed-horizon forecast."
-    )
+    st.subheader("What did the model predict for the next visit?")
+    if result.get("data_mode") == "simple_numbers":
+        st.write(
+            "I use the stage number at one visit to estimate the number recorded at that person's next visit. "
+            "This quick example uses only the numbers entered in the table; it does not contain scan or wearable measurements."
+        )
+    else:
+        st.write(
+            "I use information from one visit to estimate the stage number recorded at the next observed visit. "
+            "The time between visits can vary."
+        )
     fusion_rows = benchmarks[
         ((benchmarks["feature_group"] == "Multimodal fusion") &
          (benchmarks["model"].isin(["Random Forest", "Logistic Regression", "Neural multimodal fusion"])))
@@ -481,44 +486,56 @@ with progression_tab:
     st.caption("The neural model checkpoint is selected using validation macro-F1. Test labels are not used for training or checkpoint selection.")
 
 with modalities_tab:
-    st.subheader("What does each modality contribute?")
-    classic = benchmarks[benchmarks["model"].isin(["Random Forest", "Logistic Regression"])].copy()
-    fig = px.bar(
-        classic,
-        x="feature_group",
-        y="macro_f1",
-        color="model",
-        barmode="group",
-        range_y=[0, 1],
-        title="Unimodal versus fused feature groups on the same held-out patients",
-    )
-    st.plotly_chart(fig, use_container_width=True)
-    st.dataframe(classic, use_container_width=True, hide_index=True)
-    st.info("I use this as an ablation-style comparison of feature groups. It is not proof of clinical benefit, and random variation or synthetic data design can strongly affect the ordering.")
+    st.subheader("Which kinds of data were included?")
+    if result.get("data_mode") == "simple_numbers":
+        st.info(
+            "The simple-number option contains visit times and stage numbers only. "
+            "It does not include scan measurements or wearable-device measurements, so a comparison between those data groups is not available here. "
+            "Use the spreadsheet option with already-prepared numerical features for a multimodal comparison."
+        )
+    else:
+        classic = benchmarks[benchmarks["model"].isin(["Random Forest", "Logistic Regression"])].copy()
+        fig = px.bar(
+            classic,
+            x="feature_group",
+            y="macro_f1",
+            color="model",
+            barmode="group",
+            range_y=[0, 1],
+            title="Comparison of individual and combined data groups",
+        )
+        st.plotly_chart(fig, use_container_width=True)
+        st.dataframe(classic, use_container_width=True, hide_index=True)
+        st.info("This comparison shows how the selected feature groups behaved in this run. It is not proof of clinical benefit.")
 
 with missing_tab:
-    st.subheader("Additional missing-modality stress test")
-    miss = result["missingness"].copy()
-    st.write(
-        "I train a Random Forest on the original training split. At evaluation time, "
-        "I apply additional whole-modality dropout to the test features and update the modality-missing flags. "
-        "I do not retrain the model for each dropout rate."
-    )
-    st.dataframe(miss, use_container_width=True, hide_index=True)
-    fig = px.line(
-        miss,
-        x="additional_test_time_modality_dropout",
-        y="macro_f1",
-        markers=True,
-        range_y=[0, 1],
-        title="Test macro-F1 under added inference-time modality dropout",
-    )
-    fig.update_xaxes(title="Probability of additionally masking each modality per test example")
-    st.plotly_chart(fig, use_container_width=True)
-    st.caption("This controlled perturbation is a stress test; it does not establish robustness to real-world missing-not-at-random data.")
+    st.subheader("What happens when some information is missing?")
+    if result.get("data_mode") == "simple_numbers":
+        st.info(
+            "The simple-number example does not include scan or wearable measurements, so this extra missing-information test does not apply. "
+            "It is available when a dataset includes the corresponding numerical feature groups."
+        )
+    else:
+        miss = result["missingness"].copy()
+        st.write(
+            "I train a Random Forest on the original training data. I then hide additional image or wearable feature values during testing "
+            "to see how the fixed model responds. I do not retrain it for each setting."
+        )
+        st.dataframe(miss, use_container_width=True, hide_index=True)
+        fig = px.line(
+            miss,
+            x="additional_test_time_modality_dropout",
+            y="macro_f1",
+            markers=True,
+            range_y=[0, 1],
+            title="Model score as more feature information is hidden",
+        )
+        fig.update_xaxes(title="Chance of additionally hiding one data group")
+        st.plotly_chart(fig, use_container_width=True)
+        st.caption("This is a controlled software test, not proof that a model is robust to missing real-world information.")
 
 with causal_tab:
-    st.subheader("Can an estimator recover a known simulated treatment effect?")
+    st.subheader("Separate practice example: estimating a known effect")
     causal = result["causal"]
     st.write(
         "I use a separate synthetic dataset of simulated individuals in this tab. Treatment is assigned depending on "
@@ -542,7 +559,7 @@ with causal_tab:
     )
 
 with fairness_tab:
-    st.subheader("Descriptive subgroup evaluation")
+    st.subheader("How did results differ between groups?")
     st.dataframe(result["fairness"], use_container_width=True, hide_index=True)
     st.warning(
         "I treat these subgroup metrics as descriptive, not as evidence of fairness. "
@@ -552,9 +569,16 @@ with fairness_tab:
     )
 
 with data_tab:
-    st.subheader("Synthetic cohort preview" if result.get("data_mode") == "synthetic" else "Uploaded cohort preview")
-    st.dataframe(result["cohort"].head(20), use_container_width=True, hide_index=True)
-    st.subheader("Forecast examples preview")
+    st.subheader("Your visit information")
+    if result.get("data_mode") == "simple_numbers":
+        st.dataframe(
+            result["cohort"][["patient_id", "time_months", "current_stage"]].head(30),
+            use_container_width=True,
+            hide_index=True,
+        )
+    else:
+        st.dataframe(result["cohort"].head(20), use_container_width=True, hide_index=True)
+    st.subheader("Visit-to-visit examples")
     st.dataframe(result["examples"].head(20), use_container_width=True, hide_index=True)
     st.write("**Split sizes (forecast windows)**")
     split_sizes = pd.DataFrame([
@@ -594,10 +618,15 @@ with data_tab:
             "causal_simulation": result["causal"],
             "data_mode": result.get("data_mode", "synthetic"),
             "disclaimer": (
-                "Progression results use synthetic data; not medical evidence."
+                "Progression results use artificial sample data; not medical evidence."
                 if result.get("data_mode") == "synthetic"
-                else "Progression results use the uploaded CSV; the separate causal-effect tab uses a synthetic simulation. "
-                     "Neither establishes clinical validity."
+                else (
+                    "Progression results use simple stage numbers entered in the dashboard; no scan or wearable measurements were supplied. "
+                    "The separate practice simulation uses its own synthetic data. Neither establishes clinical validity."
+                    if result.get("data_mode") == "simple_numbers"
+                    else "Progression results use the uploaded CSV; the separate practice simulation uses synthetic data. "
+                         "Neither establishes clinical validity."
+                )
             ),
         }, indent=2, default=float).encode("utf-8"),
         file_name="experiment_summary.json",

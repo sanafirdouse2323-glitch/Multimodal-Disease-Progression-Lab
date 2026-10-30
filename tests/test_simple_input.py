@@ -63,3 +63,31 @@ def test_simple_table_rejects_missing_values_but_ignores_blank_added_rows():
     table.loc[0, STAGE_COLUMNS[1]] = None
     with pytest.raises(ValueError, match="Fill in every cell"):
         simple_table_to_cohort(table)
+
+
+def test_simple_sheet_can_be_uploaded_and_preserves_person_ids():
+    from medprogress.data import prepare_uploaded_cohort
+
+    table = make_simple_stage_table()
+    raw = table.rename(columns={
+        PERSON_COLUMN: "Person number",
+        STAGE_COLUMNS[0]: "Month 0 stage",
+        STAGE_COLUMNS[1]: "Month 6 stage",
+        STAGE_COLUMNS[2]: "Month 12 stage",
+    })
+    cohort = simple_table_to_cohort(raw)
+    assert cohort["patient_id"].nunique() == 30
+    assert set(cohort["time_months"]) == {0.0, 6.0, 12.0}
+    assert cohort.attrs["data_source"] == "simple_numbers"
+
+
+def test_simple_table_rejects_nonpositive_and_duplicate_person_identifiers():
+    table = make_simple_stage_table()
+    table.loc[0, PERSON_COLUMN] = 0
+    with pytest.raises(ValueError, match="positive whole numbers"):
+        simple_table_to_cohort(table)
+
+    table = make_simple_stage_table()
+    table.loc[1, PERSON_COLUMN] = table.loc[0, PERSON_COLUMN]
+    with pytest.raises(ValueError, match="appear only once"):
+        simple_table_to_cohort(table)

@@ -439,9 +439,9 @@ with missing_tab:
     st.subheader("Additional missing-modality stress test")
     miss = result["missingness"].copy()
     st.write(
-        "I train a Random Forest on the original training split. At evaluation time, additional whole-modality "
-        "I add dropout to the test features and update the modality-missing flags. The model is not retrained "
-        "for each dropout rate."
+        "I train a Random Forest on the original training split. At evaluation time, "
+        "I apply additional whole-modality dropout to the test features and update the modality-missing flags. "
+        "I do not retrain the model for each dropout rate."
     )
     st.dataframe(miss, use_container_width=True, hide_index=True)
     fig = px.line(

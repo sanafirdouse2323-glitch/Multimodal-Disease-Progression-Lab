@@ -17,7 +17,7 @@ I provide a beginner-friendly four-column format for people who want to work wit
 
 Use whole numbers only—no decimal points. Stage labels must be 0, 1, 2, or 3. These are generic category labels for this demonstration; they are not diagnoses or a validated medical scale. Each row is one person, with three visits at months 0, 6, and 12.
 
-The homepage starts this table with 30 artificial example rows. You can edit the numbers, add or remove rows, or download the blank number sheet. You can upload that same four-column sheet through **Upload a spreadsheet**; the app recognises it and converts it into visit records.
+The homepage starts this table with 30 artificial example rows. You can edit the numbers, add or remove rows, or download the blank number sheet. You can upload that same four-column sheet through **Upload CSV**; the app recognises it and converts it into visit records.
 
 **Important scope note:** the simple number sheet contains visit times and stage labels only. It does not contain image or wearable-device measurements. Results from this route are not a full multimodal analysis. To compare those data groups, use the detailed CSV format below and supply pre-computed numerical features.
 

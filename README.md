@@ -5,7 +5,9 @@
 
 I built this project as an educational machine-learning and research-methods prototype. I use it to demonstrate how a workflow can combine imaging-related numerical features, wearable-style numerical features, and clinical or visit-level information when estimating a participant's stage at their next recorded visit.
 
-The default experience uses entirely synthetic data. I also provide an option to upload a longitudinal CSV containing already-computed numerical features. I do not claim that the synthetic data represent a real disease, that the generated relationships are medically established, or that the models are ready for clinical use.
+The dashboard now places its three starting choices in the centre of the page: try sample data, enter simple whole numbers, or upload a spreadsheet. A first-time visitor can use the pre-filled example or edit a small table without preparing a CSV. The detailed upload option remains available for users who already have numerical features.
+
+The default experience uses entirely synthetic data. I do not claim that the synthetic data represent a real disease, that the generated relationships are medically established, or that the models are ready for clinical use.
 
 > **Important:** This is a research and learning prototype, not a diagnostic, prognostic, or treatment tool. The hosted website is public and receives uploaded files. Do not upload identifiable, confidential, or unauthorised health information. The app does not accept raw MRI, X-ray, image, or wearable sensor files.
 
@@ -36,6 +38,20 @@ I designed the dashboard so that a visitor can start without supplying a dataset
 | Causal simulation | Compares unadjusted, adjusted-regression, and inverse-probability-weighted estimates against a known synthetic effect. |
 | Subgroup evaluation | Reports descriptive metrics by available age groups and numeric group codes. |
 | Exports | Provides benchmark metrics, held-out predictions, an experiment-summary JSON file, and a blank CSV template. |
+
+## Start with a few whole numbers
+
+For visitors who do not work with research datasets, I added a simple number-entry option directly on the homepage.
+
+1. Choose **Enter simple numbers** in the centre of the page.
+2. Each row represents one person. Enter the stage number at month 0, month 6, and month 12.
+3. Use whole numbers only. The allowed stage labels are 0, 1, 2, and 3; decimal points are not needed.
+4. The example starts with 30 artificial rows. You can edit the values, add rows, or download a blank four-column number sheet.
+5. Select **Run with my numbers** to run the example.
+
+The stage numbers are generic category labels. They are not diagnoses, disease severity levels, or a validated medical scale. This quick-entry route uses visit times and stage labels only. It does **not** create scan measurements or wearable-device measurements, so it is not a full multimodal experiment. The same four-column sheet can also be uploaded using **Upload a spreadsheet**.
+
+The **How it works** link appears immediately below the data-source choices on the homepage. The detailed CSV option is for users who already have a longitudinal visit table and, where relevant, pre-computed numerical image or wearable features.
 
 ## How I define the prediction task
 
@@ -148,17 +164,17 @@ Run the repeated-seed evaluation across all three scenarios:
 
 The repeated-seed script writes one CSV with per-run results and another with aggregated scenario summaries. It compares Random Forest, Logistic Regression, and neural fusion against persistence, includes modality ablations, records changed-stage metrics, and calculates paired patient-level bootstrap intervals for accuracy differences. These CSV files are generated outputs; I do not treat them as source files, and I do not commit them unless there is a specific reason to preserve a result.
 
-## Use a CSV of my own feature-level data
+## Use a spreadsheet of my own data
 
-I provide three data-source options in the sidebar:
+The homepage offers three choices in the centre of the page:
 
-- **Synthetic demo:** runs the built-in generator. This is the safest way to explore the dashboard.
-- **Upload CSV:** accepts a longitudinal table with one row per visit.
-- **Empty CSV template:** downloads a header-only CSV that can be filled in separately.
+- **Try sample data:** runs the built-in artificial example. No file is needed.
+- **Enter simple numbers:** lets a visitor edit a compact table with a person number and three stage labels. The blank number sheet uses the same format and can be uploaded again.
+- **Upload a spreadsheet:** accepts either the simple four-column number sheet or a detailed longitudinal CSV.
 
-The required columns are **patient_id**, **time_months**, and **current_stage**. Optional columns are **age_years**, **sex_binary**, **lab_a**, **lab_b**, **img_0** through **img_7**, and **wear_0** through **wear_5**.
+For a detailed CSV, the required columns are **patient_id**, **time_months**, and **current_stage**. Optional columns are **age_years**, **sex_binary**, **lab_a**, **lab_b**, **img_0** through **img_7**, and **wear_0** through **wear_5**.
 
-The application accepts numerical features that have already been extracted. It does not read image files or process raw wearable sensor streams. The complete schema, validation rules, and upload instructions are in [UPLOAD_DATA_GUIDE.md](UPLOAD_DATA_GUIDE.md).
+The detailed CSV path accepts numerical features that have already been extracted. It does not read image files or process raw wearable sensor streams. The complete schema, validation rules, and upload instructions are in [UPLOAD_DATA_GUIDE.md](UPLOAD_DATA_GUIDE.md).
 
 The public hosted application receives any file uploaded to it. Do not upload identifiable or confidential health information. For sensitive or regulated research data, use an institutionally approved secure environment and follow the relevant consent, ethics, and data-governance requirements.
 
@@ -186,6 +202,7 @@ I describe the implementation details and limitations in [METHODS_AND_LIMITATION
 | src/medprogress/evaluation.py | Classical models, neural fusion, metrics, missing-modality stress testing, and subgroup summaries. |
 | src/medprogress/causal.py | Separate synthetic treatment-effect simulation with known ground truth. |
 | src/medprogress/experiment.py | End-to-end experiment orchestration. |
+| src/medprogress/simple_input.py | Integer-only number table for visitors who do not have a detailed CSV. |
 | scripts/run_experiment.py | Command-line runner for one synthetic experiment. |
 | scripts/evaluate_progression_scenarios.py | Repeated-seed, multi-scenario comparison and bootstrap diagnostics. |
 | tests/ | Regression tests for the app, data handling, models, causal simulation, uploads, and synthetic scenarios. |

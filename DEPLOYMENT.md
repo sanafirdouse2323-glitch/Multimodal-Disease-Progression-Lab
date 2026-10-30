@@ -1,41 +1,78 @@
-# Deployment
+# How I Deploy and Verify the Website
 
-## Live demo
+I host the Streamlit dashboard on Render and connect the service to this GitHub repository. This file records the deployment workflow and the settings I have verified. I use the Render dashboard and deployment records to confirm what is actually live.
 
-**Public app:** https://multimodal-disease-progression-lab.onrender.com
+## Public website and service
 
-**Render service:** https://dashboard.render.com/web/srv-dbgsmsfb9u1s73963g4g
+- **Live application:** https://multimodal-disease-progression-lab.onrender.com
+- **GitHub repository:** https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab
+- **Render service dashboard:** https://dashboard.render.com/web/srv-dbgsmsfb9u1s73963g4g
 
-The service was created from this repository's `main` branch. Render reported a successful build and deploy, and the service logs show Streamlit starting on the Render-assigned port.
+## Deployment settings
 
-The service uses Render's free plan in Singapore. Free services may sleep when idle, so the first visit after inactivity can take longer to respond. If the page does not load, check the Render service dashboard and recent deploy/log events.
+The Render service is connected to the repository's **main** branch. The configuration I have verified is:
 
-## Current deployment configuration
+| Setting | Configured value |
+|---|---|
+| Runtime | Python |
+| Python version | 3.12, from .python-version |
+| Build command | pip install -r requirements.txt |
+| Start command | streamlit run app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true |
+| Branch | main |
+| Automatic deployment | Enabled for commits to main |
+| Dependency note | The requirements file installs CPU-only PyTorch. |
 
-- Runtime: Python 3.12 (from `.python-version`)
-- Build command: `pip install -r requirements.txt`
-- Start command: `streamlit run app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true`
-- Branch: `main`
-- Dependencies: CPU-only PyTorch to avoid a CUDA download
+The service is on Render's free plan in the Singapore region in the configuration I inspected. Free services may sleep when idle, so the first request after inactivity may take longer to respond.
 
-Auto-deploy is enabled, so new commits to `main` initiate a Render deployment. Check the Render dashboard and deployment events before assuming a new revision is live.
+I do not assume that a GitHub commit or merge means the new version is already live. I check the Render deployment history and confirm that the latest successful live deployment points to the intended main-branch commit.
 
-## Verify locally
+## My deployment workflow
 
-```bash
-python -m pip install -r requirements.txt
-PYTHONPATH=src python -m pytest -q
-python scripts/run_experiment.py --patients 120 --epochs 3 --seed 42 --output /tmp/smoke-summary.json
-streamlit run app.py
-```
+1. I make and test changes on a feature branch.
+2. I open a pull request targeting main.
+3. I review the changed files and wait for the GitHub Actions checks to finish.
+4. I merge only after reviewing the code and test results.
+5. Because automatic deployment is enabled, a commit to main should trigger a Render deployment.
+6. I open the Render service dashboard and check the deployment status, deployed commit, and logs.
+7. I open the public website and exercise the changed workflow before I describe it as live.
 
-For an initial live check, open the public app, choose 120 synthetic patients and 5 neural epochs, click **Run full experiment**, and confirm the six tabs, benchmark table, missingness chart, causal estimates, subgroup metrics, and CSV/JSON downloads.
+If the deployment does not start or fails, I inspect the Render event and build/runtime logs. I do not change the connected repository, branch, build command, or start command as a first troubleshooting step; I verify the existing configuration first.
 
-The built-in cohort and causal-effect tab use synthetic data. When a CSV is uploaded, progression modelling, modality comparisons, missing-modality stress tests, and subgroup metrics use the uploaded feature-level table; the causal-effect tab remains a separate synthetic simulation. This is an educational research demonstration, not a clinical tool. Never commit patient records, credentials, or identifiable health information.
+## Local verification before I merge
 
+From the repository root, I run:
 
-## CSV upload and empty template
+    python -m pip install -r requirements.txt
+    PYTHONPATH=src python -m pytest -q
+    python scripts/run_experiment.py --patients 120 --epochs 3 --seed 42 --scenario progression_signal --output smoke-summary.json
+    streamlit run app.py
 
-The app provides three modes in the sidebar: **Synthetic demo**, **Upload CSV**, and **Empty CSV template**. The blank template has headers only. Uploaded files must be a longitudinal table with one row per visit and required columns `patient_id`, `time_months`, and `current_stage` (integer codes 0–3). Optional numerical feature columns are documented in `UPLOAD_DATA_GUIDE.md`.
+For the full synthetic scenario comparison, I run:
 
-The public hosted app receives uploaded files. Never upload identifiable or confidential health data. The uploader accepts numerical feature-level columns only, not raw medical images or raw wearable sensor files. The validation checks format and minimum structural requirements; it does not approve a clinical dataset or prove clinical validity. The causal-effect tab always uses a separate synthetic simulation, even when a progression CSV is uploaded.
+    python scripts/evaluate_progression_scenarios.py --patients 400 --seeds 10 --epochs 5 --bootstrap-replicates 500 --runs-output progression_scenario_runs.csv --summary-output progression_scenario_summary.csv
+
+The full scenario evaluation takes longer than the ordinary smoke experiment because it repeats the comparisons over multiple seeds and scenarios. I use it to inspect model behaviour; a successful run is not proof that a model is clinically useful.
+
+## What I check in the live app
+
+After a successful deployment, I check that:
+
+- The homepage guide and data-source options load.
+- The synthetic demo can run using the default progression-signal scenario.
+- All three synthetic scenarios can be selected and run.
+- The six result tabs appear after a successful experiment.
+- The benchmark table and changed-stage diagnostics render.
+- The modality comparison and additional missing-modality stress test render.
+- The causal simulation and descriptive subgroup table render.
+- The data preview and CSV/JSON downloads work.
+- The CSV template can be downloaded and the upload instructions are visible.
+
+I use a non-sensitive test file when checking the upload flow. I never use real patient information for a public deployment smoke test.
+
+## What the website does with uploaded data
+
+The app accepts a longitudinal CSV containing numerical feature-level data. It does not analyse raw image files or raw wearable streams. The hosted service receives the uploaded file, so I tell visitors not to upload identifiable, confidential, or unauthorised health information.
+
+When a CSV is uploaded, it is used for progression modelling, modality comparisons, the added missingness stress test, and subgroup summaries. The causal-effect tab remains a separate synthetic simulation. Passing the CSV validator does not establish clinical suitability.
+
+This deployment is an educational research demonstration. It is not approved for diagnosis, prognosis, or treatment decisions.

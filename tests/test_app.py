@@ -49,7 +49,7 @@ def test_beginner_friendly_homepage_explains_data_sources_and_whole_numbers():
     assert "Experiment settings" in rendered_text or any(
         "Experiment settings" in item.value for item in app.subheader
     )
-    assert "whole numbers" not in rendered_text.lower()  # explained in the simple-number view
+    assert "whole numbers" in rendered_text.lower()
     assert app.radio[0].options == [
         "Synthetic demo",
         "Enter simple numbers",

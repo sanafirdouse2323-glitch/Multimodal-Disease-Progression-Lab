@@ -688,6 +688,7 @@ with data_tab:
         ["patient_id", "time_months", "next_interval_months", "current_stage", "target_stage"]
     ].copy()
     prediction_export["random_forest_fused_prediction"] = result["random_forest_predictions"]
+    prediction_export["logistic_regression_fused_prediction"] = result["logistic_regression_predictions"]
     prediction_export["neural_fusion_prediction"] = result["neural_predictions"]
     st.download_button(
         "Download held-out predictions (CSV)",

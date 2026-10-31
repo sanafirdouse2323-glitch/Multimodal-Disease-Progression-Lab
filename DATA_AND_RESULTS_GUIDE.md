@@ -1,12 +1,28 @@
 # Understanding the Data, Models, and Results
 
-This guide explains what goes into the Multimodal Disease Progression Lab, how the software prepares the data, and what each result means. It describes the current implementation as it exists in this repository. It does not describe planned features as though they were already available.
+This guide explains what goes into the Multimodal Disease Progression Lab, how the software prepares the data, and what each result means. It describes the current implementation as it exists in this repository. It does not describe planned features as though they were already available. The homepage now introduces the simple-number example first, followed by the more advanced synthetic multimodal demonstration.
 
 > **Important:** This is an educational research prototype, not a diagnostic, prognostic, or treatment tool. Stage codes 0–3 are generic labels in this software. They are not a recognised medical scale. The synthetic records are artificial and do not represent real patients or established disease mechanisms.
 
 ## 1. Choose a data source
 
-The homepage offers three ways to provide data.
+The homepage presents three ways to provide data. **Enter simple numbers** is selected first so that visitors can begin with a small, pre-filled example. After running it, visitors may select **Synthetic demo** to explore the more advanced feature-level example, or choose **Upload CSV** when a prepared file is available.
+
+### Enter simple numbers
+
+This is the suggested first step for visitors who are new to the demonstration. It begins with an editable four-column table. Each row represents one person:
+
+| Column | Meaning |
+|---|---|
+| Person number | A positive, unique number used to keep that person's three visits together. |
+| Month 0 stage | The generic stage code at month 0. |
+| Month 6 stage | The generic stage code at month 6. |
+| Month 12 stage | The generic stage code at month 12. |
+
+Use whole numbers. Stage codes must be 0, 1, 2, or 3. The pre-filled rows are artificial examples; visitors may edit them. The software converts the three columns of stage codes into three visit records per person.
+
+This route contains visit times and stage codes only. It does not supply imaging measurements, wearable measurements, age, or laboratory measurements. Results from this route must not be described as a full multimodal analysis.
+
 
 ### Synthetic demo
 
@@ -24,21 +40,6 @@ The preview shown on the homepage uses 30 generated people and seed 42 to provid
 - **Model training rounds:** the default is 20 epochs, and the dashboard allows 5 to 40. An epoch is one pass through the neural model's training data; it is not a month, visit, or follow-up period.
 - **Number of sample people:** the default is 400 for the synthetic demo. This setting changes the number of artificial participants, not the number of visits or prediction examples.
 - **Sample data pattern:** the default is progression_signal. The other options are no_signal and difficult, described below. For uploaded or simple-number data, the participant count is derived from the supplied table.
-
-### Enter simple numbers
-
-This option begins with an editable four-column table. Each row represents one person:
-
-| Column | Meaning |
-|---|---|
-| Person number | A positive, unique number used to keep that person's three visits together. |
-| Month 0 stage | The generic stage code at month 0. |
-| Month 6 stage | The generic stage code at month 6. |
-| Month 12 stage | The generic stage code at month 12. |
-
-Use whole numbers. Stage codes must be 0, 1, 2, or 3. The pre-filled rows are artificial examples; visitors may edit them. The software converts the three columns of stage codes into three visit records per person.
-
-This route contains visit times and stage codes only. It does not supply imaging measurements, wearable measurements, age, or laboratory measurements. Results from this route must not be described as a full multimodal analysis.
 
 ### Upload CSV
 

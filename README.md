@@ -7,7 +7,7 @@
 
 I built this project as an educational machine-learning and research-methods prototype. I use it to demonstrate how a workflow can combine imaging-related numerical features, wearable-style numerical features, and clinical or visit-level information when estimating a participant's stage at their next recorded visit.
 
-The dashboard groups its data-source choices, empty CSV template download, and experiment settings in the centre of the page. The choices are Synthetic demo, Enter simple numbers, and Upload CSV. A first-time visitor can use the pre-filled example or edit a small table without preparing a CSV. The detailed upload option remains available for users who already have numerical features.
+The dashboard introduces the examples in two steps. Visitors are invited to begin with **Enter simple numbers**, which opens a pre-filled table of 30 artificial examples and runs with one click. They can then select **Synthetic demo** to explore generated imaging-related, wearable-style, and clinical/temporal features. **Upload CSV** remains available for visitors who already have a prepared dataset. The data-source choices, template download, and experiment settings are grouped in the centre of the page.
 
 The default experience uses entirely synthetic data. I do not claim that the synthetic data represent a real disease, that the generated relationships are medically established, or that the models are ready for clinical use.
 
@@ -43,7 +43,7 @@ I designed the dashboard so that a visitor can start without supplying a dataset
 
 ## Start with a few whole numbers
 
-For visitors who do not work with research datasets, I added a simple number-entry option directly on the homepage.
+For visitors who are new to research datasets, I provide a simple, pre-filled number-entry example as the recommended first step on the homepage. After exploring it, visitors can switch to the synthetic multimodal example.
 
 1. Choose **Enter simple numbers** in the centre of the page.
 2. Each row represents one person. Enter the stage number at month 0, month 6, and month 12.

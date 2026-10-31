@@ -2,7 +2,7 @@
 
 For an explanation of every model input, the synthetic example, and the meaning of the dashboard outputs, see [DATA_AND_RESULTS_GUIDE.md](DATA_AND_RESULTS_GUIDE.md).
 
-The homepage groups its data-source choices, empty CSV template download, and experiment settings in the centre. Visitors can choose Synthetic demo, Enter simple numbers, or Upload CSV. This guide explains the spreadsheet formats. Visitors who do not already have a research CSV can choose **Enter simple numbers** instead.
+The homepage first offers **Enter simple numbers** as a straightforward starting point, followed by **Synthetic demo** for a more advanced example and **Upload CSV** for a prepared file. The data-source choices, empty CSV template download, and experiment settings are grouped in the centre of the page. This guide explains the spreadsheet formats. Visitors who do not already have a research CSV are very welcome to begin with the pre-filled number table.
 
 Please read the privacy and scope notes before uploading anything.
 

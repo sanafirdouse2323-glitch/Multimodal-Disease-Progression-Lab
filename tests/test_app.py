@@ -12,10 +12,10 @@ def test_dashboard_renders_and_sample_experiment_completes():
     app = AppTest.from_file(str(ROOT / "app.py"), default_timeout=120).run(timeout=30)
     assert not app.exception, [exc.message for exc in app.exception]
     assert any("Multimodal Disease Progression Lab" in title.value for title in app.title)
-    assert any(button.label == "Run sample experiment" for button in app.button)
+    assert any(button.label == "Run with my numbers" for button in app.button)
     assert app.radio[0].options == [
-        "Synthetic demo",
         "Enter simple numbers",
+        "Synthetic demo",
         "Upload CSV",
     ]
     assert any(download.label == "Download empty CSV template" for download in app.download_button)
@@ -25,7 +25,7 @@ def test_dashboard_renders_and_sample_experiment_completes():
     # Keep the integration test small while exercising the complete sample path.
     app.slider[0].set_value(5)    # model training rounds
     app.slider[1].set_value(120)  # number of sample people
-    [button for button in app.button if button.label == "Run sample experiment"][0].click()
+    [button for button in app.button if button.label == "Run with my numbers"][0].click()
     app.run(timeout=120)
 
     assert not app.exception, [exc.message for exc in app.exception]
@@ -51,8 +51,8 @@ def test_beginner_friendly_homepage_explains_data_sources_and_whole_numbers():
     )
     assert "whole numbers" in rendered_text.lower()
     assert app.radio[0].options == [
-        "Synthetic demo",
         "Enter simple numbers",
+        "Synthetic demo",
         "Upload CSV",
     ]
     assert any(download.label == "Download empty CSV template" for download in app.download_button)
@@ -99,6 +99,9 @@ def test_spreadsheet_upload_source_is_available():
 def test_synthetic_scenario_selector_accepts_all_sample_patterns():
     app = AppTest.from_file(str(ROOT / "app.py"), default_timeout=120).run(timeout=30)
     assert not app.exception, [exc.message for exc in app.exception]
+    app.radio[0].set_value("Synthetic demo")
+    app.run(timeout=30)
+    assert not app.exception, [exc.message for exc in app.exception]
     selectors = [box for box in app.selectbox if box.label == "Sample data pattern"]
     assert len(selectors) == 1
     assert set(selectors[0].options) == {
@@ -110,3 +113,22 @@ def test_synthetic_scenario_selector_accepts_all_sample_patterns():
     selectors[0].set_value("Example without an extra pattern")
     app.run(timeout=30)
     assert not app.exception, [exc.message for exc in app.exception]
+
+
+
+def test_homepage_presents_simple_first_multimodal_second_and_personal_note():
+    app = AppTest.from_file(str(ROOT / "app.py"), default_timeout=120).run(timeout=30)
+    assert not app.exception, [exc.message for exc in app.exception]
+
+    visible_copy = "\\n".join(
+        [item.value for item in app.markdown]
+        + [item.value for item in app.caption]
+        + [item.value for item in app.subheader]
+        + [item.value for item in app.write]
+    )
+    assert "Step 1 — Begin with a few simple numbers" in visible_copy
+    assert "Step 2 — Explore the multimodal example" in visible_copy
+    assert "A personal note from me" in visible_copy
+    assert "my knowledge is still developing" in visible_copy
+    assert any(dataframe.value.shape == (6, 4) for dataframe in app.dataframe)
+    assert app.radio[0].value == "Enter simple numbers"

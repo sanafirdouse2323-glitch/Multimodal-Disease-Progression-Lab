@@ -42,8 +42,6 @@ st.markdown(
       .block-container { max-width: 1220px; padding-top: 2rem; padding-bottom: 3rem; }
       h1 { text-align: center; letter-spacing: -0.035em; }
       .intro-copy { max-width: 850px; margin: 0 auto 1rem auto; text-align: center; }
-      .how-link { text-align: center; margin: 0.2rem 0 1rem 0; font-size: 1rem; }
-      .how-link a { font-weight: 650; text-decoration: none; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -65,76 +63,97 @@ st.info(
     "The sample numbers are artificial. Do not enter names, medical record numbers, or confidential health information."
 )
 
-with st.container(border=True):
-    st.markdown("<h3 style='text-align:center; margin-bottom:0.2rem;'>Choose your data source</h3>", unsafe_allow_html=True)
-    st.markdown(
-        "<p style='text-align:center;'>Start with sample data, enter a few whole numbers, or use an existing spreadsheet.</p>",
-        unsafe_allow_html=True,
-    )
-    source_choice = st.radio(
-        "Data sources",
-        ["Try sample data", "Enter simple numbers", "Upload a spreadsheet"],
-        index=0,
-        horizontal=True,
-        label_visibility="collapsed",
-        key="data_source_mode",
-    )
+# Keep the data source, template download, and experiment controls together
+# in the centre of the page so visitors do not need to look in the sidebar.
+left_gutter, centre_panel, right_gutter = st.columns([1, 3.6, 1])
+with centre_panel:
+    with st.container(border=True):
+        st.markdown("### Data source")
+        st.caption("Choose the easiest way to get started. The synthetic demo is ready to run.")
 
-st.markdown(
-    '<p class="how-link"><a href="#how-it-works">How it works ↓</a></p>',
-    unsafe_allow_html=True,
-)
+        source_choice = st.radio(
+            "Choose a starting point",
+            ["Synthetic demo", "Enter simple numbers", "Upload CSV"],
+            index=0,
+            horizontal=True,
+            label_visibility="collapsed",
+            key="data_source_mode",
+        )
+        st.download_button(
+            "Download empty CSV template",
+            data=empty_upload_template().to_csv(index=False).encode("utf-8"),
+            file_name="longitudinal_upload_template.csv",
+            mime="text/csv",
+            use_container_width=True,
+            help=(
+                "A blank, header-only template for a detailed visit-by-visit CSV. "
+                "Use it when you choose Upload CSV."
+            ),
+        )
+        st.caption(
+            "The empty template is for detailed visit data. To explore without preparing a file, "
+            "choose Synthetic demo or Enter simple numbers."
+        )
 
-st.markdown('<div id="how-it-works"></div>', unsafe_allow_html=True)
-with st.expander("How it works", expanded=False):
-    st.markdown(
-        """
-        1. **Choose a data source.** The sample is ready to run. You can also enter whole numbers or upload a CSV.
-        2. **Add visit information.** In the simple table, each person has three stage numbers: month 0, month 6, and month 12.
-        3. **Run the example.** The program uses one visit to estimate the stage number at that person's next recorded visit.
-        4. **Read the results.** The tables and charts compare model outputs. They are learning examples, not medical advice.
-        """
-    )
-    st.markdown(
-        "[Project overview](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab) · "
-        "[Methods and limits](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/blob/main/METHODS_AND_LIMITATIONS.md) · "
-        "[Detailed CSV guide](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/blob/main/UPLOAD_DATA_GUIDE.md)"
-    )
+        st.markdown("---")
+        st.markdown("### Experiment settings")
+        st.caption("The default settings are suitable for a first run. You can adjust them here.")
+
+        seed_column, epochs_column, sample_column = st.columns(3)
+        with seed_column:
+            seed = st.number_input(
+                "Random seed",
+                min_value=0,
+                max_value=99999,
+                value=42,
+                step=1,
+                help="Keeps a run reproducible when the same data and settings are used.",
+            )
+        with epochs_column:
+            epochs = st.slider(
+                "Model training rounds",
+                min_value=5,
+                max_value=40,
+                value=20,
+                step=5,
+                help="More rounds take longer; the default is enough for this demonstration.",
+            )
+
+        patient_count = 400
+        synthetic_scenario = "progression_signal"
+        if source_choice == "Synthetic demo":
+            with sample_column:
+                patient_count = st.slider(
+                    "Number of sample people",
+                    min_value=120,
+                    max_value=800,
+                    value=400,
+                    step=40,
+                    help="This changes the size of the artificial sample, not real patient data.",
+                )
+            scenario_labels = {
+                "Example with a pattern (recommended)": "progression_signal",
+                "Example without an extra pattern": "no_signal",
+                "More difficult example": "difficult",
+            }
+            selected_scenario_label = st.selectbox(
+                "Sample data pattern",
+                options=list(scenario_labels),
+                index=0,
+                help="These are artificial test settings, not medical facts.",
+            )
+            synthetic_scenario = scenario_labels[selected_scenario_label]
+        else:
+            with sample_column:
+                st.markdown("**People in your data**")
+                st.caption("This is set automatically from your table or uploaded CSV.")
 
 source_to_mode = {
-    "Try sample data": "Synthetic demo",
+    "Synthetic demo": "Synthetic demo",
     "Enter simple numbers": "Simple numbers",
-    "Upload a spreadsheet": "Upload CSV",
+    "Upload CSV": "Upload CSV",
 }
 data_source = source_to_mode[source_choice]
-
-with st.sidebar:
-    st.header("Optional settings")
-    seed = st.number_input("Random seed", min_value=0, max_value=99999, value=42, step=1)
-    epochs = st.slider("Model training rounds", min_value=5, max_value=40, value=20, step=5)
-    patient_count = 400
-    synthetic_scenario = "progression_signal"
-    if data_source == "Synthetic demo":
-        patient_count = st.slider(
-            "Number of sample people",
-            min_value=120,
-            max_value=800,
-            value=400,
-            step=40,
-            help="This changes the size of the artificial sample, not real patient data.",
-        )
-        scenario_labels = {
-            "Example with a pattern (recommended)": "progression_signal",
-            "Example without an extra pattern": "no_signal",
-            "More difficult example": "difficult",
-        }
-        selected_scenario_label = st.selectbox(
-            "Sample data pattern",
-            options=list(scenario_labels),
-            index=0,
-            help="These are artificial test settings, not medical facts.",
-        )
-        synthetic_scenario = scenario_labels[selected_scenario_label]
 
 raw_uploaded_frame = None
 uploaded_cohort = None
@@ -250,12 +269,9 @@ elif data_source == "Upload CSV":
         max_upload_size=20,
         help="Maximum file size: 20 MB.",
     )
-    st.download_button(
-        "Download the detailed CSV template",
-        data=empty_upload_template().to_csv(index=False).encode("utf-8"),
-        file_name="longitudinal_upload_template.csv",
-        mime="text/csv",
-        help="This template is for users who already have numerical feature columns.",
+    st.caption(
+        "Need a blank file? Use **Download empty CSV template** in the Data source panel above. "
+        "It contains the column names for a detailed visit-by-visit spreadsheet."
     )
     if uploaded_file is not None:
         upload_bytes = uploaded_file.getvalue()
@@ -724,4 +740,34 @@ with data_tab:
         }, indent=2, default=float).encode("utf-8"),
         file_name="experiment_summary.json",
         mime="application/json",
+    )
+
+st.markdown("---")
+with st.container(border=True):
+    st.subheader("Start here: how this demo works")
+    st.write(
+        "The results above show what the models did with the data you selected. "
+        "Use this quick guide to understand the steps and what the scores do—and do not—tell you."
+    )
+    guide_columns = st.columns(4)
+    with guide_columns[0]:
+        st.markdown("**1. Choose your data**")
+        st.write("Try the artificial sample, enter simple stage numbers, or upload a prepared CSV.")
+    with guide_columns[1]:
+        st.markdown("**2. Check the settings**")
+        st.write("The sample starts with 400 artificial people. You can change the sample size and model settings in the centre panel.")
+    with guide_columns[2]:
+        st.markdown("**3. Run and explore**")
+        st.write("Use the run button, then browse the six result tabs for predictions, data groups, missing information, summaries, and downloads.")
+    with guide_columns[3]:
+        st.markdown("**4. Interpret carefully**")
+        st.write("A next-visit prediction estimates the category recorded at the next visit. A high score here is not evidence of medical accuracy.")
+    st.caption(
+        "This is an educational software demonstration, not a medical tool. The sample data are artificial. "
+        "Stage codes 0–3 are generic categories, not diagnoses or a validated medical scale."
+    )
+    st.markdown(
+        "[Project overview](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab) · "
+        "[Methods and limits](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/blob/main/METHODS_AND_LIMITATIONS.md) · "
+        "[CSV upload guide](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/blob/main/UPLOAD_DATA_GUIDE.md)"
     )

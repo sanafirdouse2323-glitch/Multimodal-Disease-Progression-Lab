@@ -1,6 +1,6 @@
 # Using My CSV Upload Option
 
-I designed the homepage so visitors can start in three ways: try sample data, enter simple whole numbers, or upload a spreadsheet. This guide explains the spreadsheet formats. Visitors who do not already have a research CSV can choose **Enter simple numbers** instead.
+The homepage groups its data-source choices, empty CSV template download, and experiment settings in the centre. Visitors can choose Synthetic demo, Enter simple numbers, or Upload CSV. This guide explains the spreadsheet formats. Visitors who do not already have a research CSV can choose **Enter simple numbers** instead.
 
 Please read the privacy and scope notes before uploading anything.
 
@@ -17,7 +17,7 @@ I provide a beginner-friendly four-column format for people who want to work wit
 
 Use whole numbers only—no decimal points. Stage labels must be 0, 1, 2, or 3. These are generic category labels for this demonstration; they are not diagnoses or a validated medical scale. Each row is one person, with three visits at months 0, 6, and 12.
 
-The homepage starts this table with 30 artificial example rows. You can edit the numbers, add or remove rows, or download the blank number sheet. You can upload that same four-column sheet through **Upload a spreadsheet**; the app recognises it and converts it into visit records.
+The homepage starts this table with 30 artificial example rows. You can edit the numbers, add or remove rows, or download the blank number sheet. You can upload that same four-column sheet through **Upload CSV**; the app recognises it and converts it into visit records.
 
 **Important scope note:** the simple number sheet contains visit times and stage labels only. It does not contain image or wearable-device measurements. Results from this route are not a full multimodal analysis. To compare those data groups, use the detailed CSV format below and supply pre-computed numerical features.
 
@@ -102,10 +102,10 @@ The causal-effect tab is different: it always uses a separate synthetic treatmen
 
 ## How to use the detailed CSV option
 
-1. Choose **Upload a spreadsheet** in the centre of the homepage.
-2. Select **Download the detailed CSV template** if you need to see all supported column names.
+1. Choose **Upload CSV** in the centre of the homepage.
+2. Select **Download empty CSV template** in the centre panel to get the supported column names.
 3. Prepare one row per participant visit, using the detailed required and optional columns above.
-4. Choose the completed CSV file and read the validation message and preview.
+4. Choose your completed CSV file and read the validation message and preview.
 5. Select **Run on my spreadsheet**.
 6. Review the results and their limitations before interpreting them.
 

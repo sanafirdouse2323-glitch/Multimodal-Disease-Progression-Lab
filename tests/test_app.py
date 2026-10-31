@@ -14,15 +14,18 @@ def test_dashboard_renders_and_sample_experiment_completes():
     assert any("Multimodal Disease Progression Lab" in title.value for title in app.title)
     assert any(button.label == "Run sample experiment" for button in app.button)
     assert app.radio[0].options == [
-        "Try sample data",
+        "Synthetic demo",
         "Enter simple numbers",
-        "Upload a spreadsheet",
+        "Upload CSV",
     ]
+    assert any(download.label == "Download empty CSV template" for download in app.download_button)
+    assert any(slider.label == "Model training rounds" for slider in app.slider)
+    assert any(slider.label == "Number of sample people" for slider in app.slider)
 
     # Keep the integration test small while exercising the complete sample path.
     app.slider[0].set_value(5)    # model training rounds
     app.slider[1].set_value(120)  # number of sample people
-    app.button[0].click()
+    [button for button in app.button if button.label == "Run sample experiment"][0].click()
     app.run(timeout=120)
 
     assert not app.exception, [exc.message for exc in app.exception]
@@ -32,6 +35,7 @@ def test_dashboard_renders_and_sample_experiment_completes():
     assert "Neural model score" in metric_labels
     assert len(app.tabs) == 6
     assert any("What did the model predict for the next visit?" in item.value for item in app.subheader)
+    assert any("Start here: how this demo works" in item.value for item in app.subheader)
 
 
 def test_beginner_friendly_homepage_explains_data_sources_and_whole_numbers():
@@ -40,15 +44,19 @@ def test_beginner_friendly_homepage_explains_data_sources_and_whole_numbers():
     rendered_text = "\\n".join(
         [item.value for item in app.markdown]
         + [item.label for item in app.radio]
-        + [item.label for item in app.caption]
+        + [item.value for item in app.caption]
     )
-    assert "How it works" in rendered_text
+    assert "Experiment settings" in rendered_text or any(
+        "Experiment settings" in item.value for item in app.subheader
+    )
     assert "whole numbers" in rendered_text.lower()
     assert app.radio[0].options == [
-        "Try sample data",
+        "Synthetic demo",
         "Enter simple numbers",
-        "Upload a spreadsheet",
+        "Upload CSV",
     ]
+    assert any(download.label == "Download empty CSV template" for download in app.download_button)
+    assert any(number_input.label == "Random seed" for number_input in app.number_input)
     # Streamlit's AppTest exposes these element collections separately; do not
     # concatenate ElementList instances (that is unsupported).
     safety_notices = [item.value for item in app.info] + [item.value for item in app.warning]
@@ -79,7 +87,7 @@ def test_simple_number_entry_accepts_default_integer_table_and_runs():
 
 def test_spreadsheet_upload_source_is_available():
     app = AppTest.from_file(str(ROOT / "app.py"), default_timeout=120).run(timeout=30)
-    app.radio[0].set_value("Upload a spreadsheet")
+    app.radio[0].set_value("Upload CSV")
     app.run(timeout=30)
 
     assert not app.exception, [exc.message for exc in app.exception]

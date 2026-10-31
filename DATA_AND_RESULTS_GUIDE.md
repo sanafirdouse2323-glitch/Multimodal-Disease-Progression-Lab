@@ -265,7 +265,7 @@ Keep in mind that the uploaded CSV's identifiers are included in the exported he
 To keep the results clear, the following are not outputs of the current dashboard:
 
 - It does not process raw MRI, X-ray, retinal, or other medical image files.
-- It does not process raw wearable sensor time series.
+- It does not process raw wearable sensor time series or raw wearable sensor streams.
 - It does not predict a fixed-horizon outcome; it predicts the next observed stage code.
 - It does not display calibrated individual prediction probabilities or personal prediction intervals.
 - It does not estimate a causal treatment effect from the uploaded progression data.

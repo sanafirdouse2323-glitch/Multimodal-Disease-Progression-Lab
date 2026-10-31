@@ -60,6 +60,6 @@ def test_data_guide_explains_each_dashboard_result_and_limitations():
     ):
         assert section in guide
 
-    assert "The causal tab" not in guide or "separate synthetic" in guide
+    assert "It does not use the progression CSV or the simple numbers entered on the homepage." in guide
     assert "not a diagnostic, prognostic, or treatment tool" in guide
     assert "not a formal fairness audit" in guide

@@ -1,5 +1,7 @@
 # Using My CSV Upload Option
 
+For an explanation of every model input, the synthetic example, and the meaning of the dashboard outputs, see [DATA_AND_RESULTS_GUIDE.md](DATA_AND_RESULTS_GUIDE.md).
+
 The homepage groups its data-source choices, empty CSV template download, and experiment settings in the centre. Visitors can choose Synthetic demo, Enter simple numbers, or Upload CSV. This guide explains the spreadsheet formats. Visitors who do not already have a research CSV can choose **Enter simple numbers** instead.
 
 Please read the privacy and scope notes before uploading anything.

@@ -3,6 +3,8 @@
 **Live interactive demo:** https://multimodal-disease-progression-lab.onrender.com  
 **GitHub repository:** https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab
 
+**Data and results guide:** [DATA_AND_RESULTS_GUIDE.md](DATA_AND_RESULTS_GUIDE.md) — explains the generated data, CSV fields, model inputs, evaluation metrics, result tabs, and downloads.
+
 I built this project as an educational machine-learning and research-methods prototype. I use it to demonstrate how a workflow can combine imaging-related numerical features, wearable-style numerical features, and clinical or visit-level information when estimating a participant's stage at their next recorded visit.
 
 The dashboard groups its data-source choices, empty CSV template download, and experiment settings in the centre of the page. The choices are Synthetic demo, Enter simple numbers, and Upload CSV. A first-time visitor can use the pre-filled example or edit a small table without preparing a CSV. The detailed upload option remains available for users who already have numerical features.

@@ -19,13 +19,19 @@ def test_dashboard_renders_and_sample_experiment_completes():
         "Upload CSV",
     ]
     assert any(download.label == "Download empty CSV template" for download in app.download_button)
+
+    # The simple-number option is the first experience. Also exercise the
+    # second, multimodal synthetic demonstration through its full run path.
+    app.radio[0].set_value("Synthetic demo")
+    app.run(timeout=30)
+    assert not app.exception, [exc.message for exc in app.exception]
+    assert any(button.label == "Run sample experiment" for button in app.button)
     assert any(slider.label == "Model training rounds" for slider in app.slider)
     assert any(slider.label == "Number of sample people" for slider in app.slider)
 
-    # Keep the integration test small while exercising the complete sample path.
     app.slider[0].set_value(5)    # model training rounds
     app.slider[1].set_value(120)  # number of sample people
-    [button for button in app.button if button.label == "Run with my numbers"][0].click()
+    [button for button in app.button if button.label == "Run sample experiment"][0].click()
     app.run(timeout=120)
 
     assert not app.exception, [exc.message for exc in app.exception]
@@ -124,7 +130,6 @@ def test_homepage_presents_simple_first_multimodal_second_and_personal_note():
         [item.value for item in app.markdown]
         + [item.value for item in app.caption]
         + [item.value for item in app.subheader]
-        + [item.value for item in app.write]
     )
     assert "Step 1 — Begin with a few simple numbers" in visible_copy
     assert "Step 2 — Explore the multimodal example" in visible_copy

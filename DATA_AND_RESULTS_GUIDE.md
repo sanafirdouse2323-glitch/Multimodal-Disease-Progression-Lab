@@ -20,7 +20,7 @@ The preview shown on the homepage uses 30 generated people and seed 42 to provid
 
 ### Experiment settings
 
-- **Random seed:** the default is 42. A fixed seed makes the generator and supported model routines reproducible when the same settings and software environment are used.
+- **Random seed:** the default is 42. The seed controls the synthetic generator and seeded model components, helping make repeated runs comparable. Package versions and runtime details can still affect results.
 - **Model training rounds:** the default is 20 epochs, and the dashboard allows 5 to 40. An epoch is one pass through the neural model's training data; it is not a month, visit, or follow-up period.
 - **Number of sample people:** the default is 400 for the synthetic demo. This setting changes the number of artificial participants, not the number of visits or prediction examples.
 - **Sample data pattern:** the default is progression_signal. The other options are no_signal and difficult, described below. For uploaded or simple-number data, the participant count is derived from the supplied table.

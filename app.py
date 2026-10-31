@@ -88,9 +88,55 @@ st.markdown(
     unsafe_allow_html=True,
 )
 st.info(
-    "This is an educational software demonstration, not a medical tool. "
-    "The sample numbers are artificial. Do not enter names, medical record numbers, or confidential health information."
+    "This is an educational demonstration, not a medical tool. "
+    "The examples use artificial data. Please do not enter names, medical record numbers, or confidential health information."
 )
+
+with st.container(border=True):
+    st.subheader("A simple way to explore this project")
+    st.write(
+        "Thank you for taking a look at this demonstration. You are welcome to begin with "
+        "a small example and then move on to the more advanced multimodal example."
+    )
+    demo_steps = st.columns(2)
+    with demo_steps[0]:
+        st.markdown("**Step 1 — Begin with a few simple numbers**")
+        st.write(
+            "Please start with **Enter simple numbers** below. Each row represents one example person, "
+            "with a stage number at months 0, 6, and 12. The table is already filled in, so you can "
+            "select **Run with my numbers** without preparing a file."
+        )
+    with demo_steps[1]:
+        st.markdown("**Step 2 — Explore the multimodal example**")
+        st.write(
+            "After trying the simple example, please select **Synthetic demo**. This second example "
+            "introduces generated imaging-related, wearable-style, and clinical/temporal features, "
+            "then compares different machine-learning models."
+        )
+    st.markdown("**A small example**")
+    simple_preview = pd.DataFrame([
+        {"Person": 1, "Month 0": 0, "Month 6": 0, "Month 12": 0},
+        {"Person": 2, "Month 0": 0, "Month 6": 1, "Month 12": 1},
+        {"Person": 3, "Month 0": 1, "Month 6": 1, "Month 12": 2},
+        {"Person": 4, "Month 0": 1, "Month 6": 2, "Month 12": 2},
+        {"Person": 5, "Month 0": 2, "Month 6": 2, "Month 12": 3},
+        {"Person": 6, "Month 0": 3, "Month 6": 3, "Month 12": 3},
+    ])
+    st.dataframe(simple_preview, use_container_width=True, hide_index=True)
+    st.caption(
+        "These are artificial examples. The numbers 0–3 are generic category labels, "
+        "not diagnoses or a recognised medical scale."
+    )
+
+with st.container(border=True):
+    st.markdown("**A personal note from me**")
+    st.write(
+        "I prepared this initial demonstration in a relatively short period, using my current "
+        "understanding of machine learning and AI. I recognise that my knowledge is still developing "
+        "and that I have much more to learn. I would be sincerely grateful for an opportunity to receive "
+        "research guidance, strengthen my skills, and contribute to your research group's work. "
+        "Thank you very much for taking the time to explore my work."
+    )
 
 # Keep the data source, template download, and experiment controls together
 # in the centre of the page so visitors do not need to look in the sidebar.
@@ -98,11 +144,14 @@ left_gutter, centre_panel, right_gutter = st.columns([1, 3.6, 1])
 with centre_panel:
     with st.container(border=True):
         st.markdown("### Data source")
-        st.caption("Choose how you would like to provide the data. The synthetic example is ready to run.")
+        st.caption(
+            "The simple-number example is selected first. After trying it, you can switch to Synthetic demo "
+            "for a more advanced example, or choose Upload CSV if you already have a prepared file."
+        )
 
         source_choice = st.radio(
             "Choose a starting point",
-            ["Synthetic demo", "Enter simple numbers", "Upload CSV"],
+            ["Enter simple numbers", "Synthetic demo", "Upload CSV"],
             index=0,
             horizontal=True,
             label_visibility="collapsed",
@@ -120,8 +169,8 @@ with centre_panel:
             ),
         )
         st.caption(
-            "The empty template is for detailed visit data. To explore without preparing a file, "
-            "choose Synthetic demo or Enter simple numbers."
+            "The empty template is for detailed visit data. To begin without preparing a file, "
+            "please use Enter simple numbers or Synthetic demo."
         )
 
         st.markdown("---")
@@ -842,16 +891,16 @@ with st.container(border=True):
     guide_columns = st.columns(4)
     with guide_columns[0]:
         st.markdown("**1. Choose your data**")
-        st.write("Try the artificial sample, enter simple stage numbers, or upload a prepared CSV.")
+        st.write("You are welcome to begin with the pre-filled simple-number table, then explore the synthetic example or upload a prepared CSV.")
     with guide_columns[1]:
         st.markdown("**2. Check the settings**")
-        st.write("The sample starts with 400 artificial people. You can change the sample size and model settings in the centre panel.")
+        st.write("The simple-number example starts with 30 artificial rows. The Synthetic demo starts with 400 artificial people. You may adjust the available settings in the centre panel.")
     with guide_columns[2]:
         st.markdown("**3. Run and explore**")
-        st.write("Use the run button, then browse the six result tabs for predictions, data groups, missing information, summaries, and downloads.")
+        st.write("Please select the run button, then explore the six result tabs for predictions, data groups, missing information, summaries, and downloads.")
     with guide_columns[3]:
         st.markdown("**4. Interpret carefully**")
-        st.write("A next-visit prediction estimates the category recorded at the next visit. A high score here is not evidence of medical accuracy.")
+        st.write("A next-visit prediction estimates the category recorded at the next visit. Please interpret the scores as results from this demonstration, not as evidence of medical accuracy.")
     st.caption(
         "This is an educational software demonstration, not a medical tool. The sample data are artificial. "
         "Stage codes 0–3 are generic categories, not diagnoses or a validated medical scale."

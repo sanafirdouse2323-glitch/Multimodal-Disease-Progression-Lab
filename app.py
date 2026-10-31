@@ -32,6 +32,12 @@ from medprogress.simple_input import (  # noqa: E402
     simple_table_to_cohort,
 )
 
+st.set_page_config(
+    page_title="Multimodal Disease Progression Lab",
+    page_icon="🧬",
+    layout="wide",
+)
+
 @st.cache_data(show_spinner=False)
 def synthetic_preview_rows(scenario: str) -> pd.DataFrame:
     """Return a stable, generated example showing current-to-next-visit records."""
@@ -58,11 +64,6 @@ def synthetic_preview_rows(scenario: str) -> pd.DataFrame:
     ].head(5).copy()
 
 
-st.set_page_config(
-    page_title="Multimodal Disease Progression Lab",
-    page_icon="🧬",
-    layout="wide",
-)
 
 st.markdown(
     """

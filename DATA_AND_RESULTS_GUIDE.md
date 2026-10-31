@@ -18,6 +18,13 @@ The default scenario is **Example with a pattern**. It is useful for inspecting 
 
 The preview shown on the homepage uses 30 generated people and seed 42 to provide a stable example of the data structure. It illustrates the selected scenario's columns and one participant's next-visit rows. The preview is an example only; changing the sample size, random seed, or scenario changes the experiment data.
 
+### Experiment settings
+
+- **Random seed:** the default is 42. A fixed seed makes the generator and supported model routines reproducible when the same settings and software environment are used.
+- **Model training rounds:** the default is 20 epochs, and the dashboard allows 5 to 40. An epoch is one pass through the neural model's training data; it is not a month, visit, or follow-up period.
+- **Number of sample people:** the default is 400 for the synthetic demo. This setting changes the number of artificial participants, not the number of visits or prediction examples.
+- **Sample data pattern:** the default is progression_signal. The other options are no_signal and difficult, described below. For uploaded or simple-number data, the participant count is derived from the supplied table.
+
 ### Enter simple numbers
 
 This option begins with an editable four-column table. Each row represents one person:
@@ -52,7 +59,7 @@ Optional columns may be omitted, and optional numerical values may be blank. Ext
 
 At least 10 unique participants are required by the current data-splitting code. Each participant must have at least two visits, and the training partition must contain at least two different next-visit stage classes for the classifiers to run. These are software requirements, not recommendations for a scientifically adequate sample size.
 
-The CSV reader initially treats field values as text so identifiers such as 001 remain distinct from 1. Numeric fields are converted only after the headers and values have been checked.
+The CSV reader initially treats field values as text so identifiers such as 001 remain distinct from 1. Numeric fields are converted only after the headers and values have been checked. The validator checks that patient_id is not blank; it cannot determine whether an identifier is personally identifying. You are responsible for using a non-identifying study code and for having permission to use the data.
 
 ## 2. What the synthetic data represent
 
@@ -232,7 +239,7 @@ This exercise checks estimators under a known artificial data-generating process
 
 ## 13. What the group summaries mean
 
-The Group summaries tab reports accuracy and macro-F1 for the available numeric code groups and age groups:
+The Group summaries tab reports the neural fusion model's accuracy and macro-F1 for the available numeric code groups and age groups:
 
 - Numeric code groups 0 and 1 are displayed as code groups. The software does not infer their real-world meaning.
 - Age groups are split at the median age calculated from the training partition. The same threshold is applied to the test examples.

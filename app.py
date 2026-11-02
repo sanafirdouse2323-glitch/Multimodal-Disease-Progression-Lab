@@ -651,9 +651,14 @@ with progression_tab:
     with st.expander("Detailed model evaluation: per-class metrics and confusion matrices"):
         st.write(
             "The following tables use the held-out test participants. In each confusion matrix, "
-            "rows are actual stage labels and columns are predicted stage labels. Stage labels "
-            "0–3 are generic synthetic codes, not medical categories."
+            "rows are actual stage labels and columns are predicted stage labels."
         )
+        if result.get("data_mode") == "synthetic":
+            st.caption("For the built-in sample, labels 0–3 are generic simulated categories, not medical stages.")
+        elif result.get("data_mode") == "simple_numbers":
+            st.caption("The simple-number example uses generic labels 0–3; they are not diagnoses or a recognised medical scale.")
+        else:
+            st.caption("For an uploaded CSV, the meaning of labels 0–3 depends on the mapping supplied with that dataset; the app does not validate their clinical meaning.")
         for model_name, diagnostic in result["model_diagnostics"].items():
             st.markdown(f"**{model_name}**")
             class_rows = []
@@ -889,12 +894,42 @@ with data_tab:
     prediction_export["random_forest_fused_prediction"] = result["random_forest_predictions"]
     prediction_export["logistic_regression_fused_prediction"] = result["logistic_regression_predictions"]
     prediction_export["neural_fusion_prediction"] = result["neural_predictions"]
+    prediction_export["random_forest_error"] = (
+        prediction_export["random_forest_fused_prediction"] != prediction_export["target_stage"]
+    )
+    prediction_export["logistic_regression_error"] = (
+        prediction_export["logistic_regression_fused_prediction"] != prediction_export["target_stage"]
+    )
+    prediction_export["neural_fusion_error"] = (
+        prediction_export["neural_fusion_prediction"] != prediction_export["target_stage"]
+    )
     st.download_button(
         "Download held-out predictions (CSV)",
         data=prediction_export.to_csv(index=False).encode("utf-8"),
         file_name="held_out_predictions.csv",
         mime="text/csv",
     )
+    st.subheader("Held-out prediction error analysis")
+    st.caption(
+        "These are test examples on which at least one classifier predicted a different stage "
+        "from the held-out target. The table supports inspection of model errors; it is not a "
+        "clinical error review."
+    )
+    error_rows = prediction_export.loc[
+        prediction_export[[
+            "random_forest_error", "logistic_regression_error", "neural_fusion_error"
+        ]].any(axis=1)
+    ]
+    if error_rows.empty:
+        st.info("No classification errors were found for these test examples.")
+    else:
+        st.dataframe(error_rows.head(50), use_container_width=True, hide_index=True)
+        st.download_button(
+            "Download held-out error examples (CSV)",
+            data=error_rows.to_csv(index=False).encode("utf-8"),
+            file_name="held_out_error_analysis.csv",
+            mime="text/csv",
+        )
     st.download_button(
         "Download experiment summary (JSON)",
         data=json.dumps({

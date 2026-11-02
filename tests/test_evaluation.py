@@ -50,6 +50,15 @@ def test_classification_metrics_reject_empty_or_misaligned_inputs():
             raise AssertionError("Invalid labels should raise ValueError")
 
 
+def test_classification_metrics_reject_unknown_stage_labels():
+    try:
+        classification_metrics([0, 1], [0, 4])
+    except ValueError as exc:
+        assert "Stage labels and predictions" in str(exc)
+    else:
+        raise AssertionError("Labels outside the defined stage range must be rejected")
+
+
 def test_preprocessor_is_fitted_from_training_values_only():
     train = np.array([[1.0, np.nan], [3.0, 4.0]])
     processor = Preprocessor.fit(train)

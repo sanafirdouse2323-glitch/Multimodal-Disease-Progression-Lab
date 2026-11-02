@@ -89,7 +89,7 @@ I compare the following approaches:
 - **Logistic Regression:** provides the same feature-group comparisons using a linear classifier.
 - **Neural multimodal fusion:** uses separate small neural-network encoders for imaging-related, wearable-style, and clinical/temporal inputs, then combines their representations for four-class prediction.
 
-I report accuracy and macro-F1. Accuracy measures the fraction of correct predictions. Macro-F1 calculates F1 for each of the four stage labels and averages the class scores equally, so performance on less common labels is not hidden by the largest class.
+I report accuracy, balanced accuracy, macro precision, macro recall, and macro-F1. Accuracy measures the fraction of correct predictions. Balanced accuracy averages recall across classes represented in the test set. Macro precision, recall, and F1 weight the four defined stage labels equally. The dashboard also shows per-class precision, recall, F1 and support, together with confusion matrices for the Random Forest, Logistic Regression, and neural multimodal fusion models. Macro-F1 and balanced accuracy are different metrics, so I label them separately.
 
 I also report exact next-stage accuracy on test windows where the stage actually changed, together with precision, recall, and F1 for detecting whether any stage change occurred. I added these measures because an overall score can look high when most next-visit labels stay unchanged.
 
@@ -166,7 +166,7 @@ Run the repeated-seed evaluation across all three scenarios:
 
     python scripts/evaluate_progression_scenarios.py --patients 400 --seeds 10 --epochs 5 --bootstrap-replicates 500 --runs-output progression_scenario_runs.csv --summary-output progression_scenario_summary.csv
 
-The repeated-seed script writes one CSV with per-run results and another with aggregated scenario summaries. It compares Random Forest, Logistic Regression, and neural fusion against persistence, includes modality ablations, records changed-stage metrics, and calculates paired patient-level bootstrap intervals for accuracy differences. These CSV files are generated outputs; I do not treat them as source files, and I do not commit them unless there is a specific reason to preserve a result.
+The repeated-seed script writes one CSV with per-run results and another with aggregated scenario summaries. It compares Random Forest, Logistic Regression, and neural fusion against persistence, includes modality ablations, records accuracy, balanced accuracy, macro precision/recall/F1 and changed-stage metrics, and calculates paired patient-level bootstrap intervals for accuracy differences. The scenario summary includes means and seed-to-seed standard deviations for the aggregate classification metrics. The dashboard also provides per-class precision, recall, F1, confusion matrices, and a downloadable set of held-out examples where at least one classifier was incorrect. These CSV files are generated outputs; I do not treat them as source files, and I do not commit them unless there is a specific reason to preserve a result.
 
 ## Use a spreadsheet of my own data
 

@@ -79,7 +79,15 @@ I include the persistence baseline because consecutive stage labels may remain u
 
 ## 7. Evaluation metrics
 
-I report overall accuracy and macro-F1 for stage classification. Macro-F1 averages the per-class F1 scores equally across the four stage labels. This makes it possible to see when a model performs poorly on a less common class even if overall accuracy is high.
+For each held-out classification result, I report:
+
+- **Accuracy:** the fraction of test predictions that are correct.
+- **Balanced accuracy:** the average recall across the classes represented in the test labels. Unlike ordinary accuracy, this gives each represented class equal weight.
+- **Macro precision, macro recall, and macro-F1:** each metric is calculated across the four defined stage labels with equal class weighting. Macro-F1 is not the same as balanced accuracy. When all four stage labels occur in the test set, balanced accuracy and fixed-label macro recall will generally be equal; if a stage is absent from the test set, balanced accuracy averages the represented classes while the fixed-label macro report still includes all four labels.
+- **Per-class precision, recall, F1, and support:** these show the performance and number of test examples for each stage label.
+- **Confusion matrix:** rows are actual stage labels and columns are predicted stage labels; counts are calculated on held-out test examples.
+
+The dashboard displays the aggregate measures in the model-comparison table and provides per-class metrics and confusion matrices for the Random Forest, Logistic Regression, and neural multimodal fusion models. The experiment-summary JSON also includes the detailed metrics. A held-out error-analysis table and CSV identify test examples where at least one of those classifiers disagrees with the target label; these are prediction errors for inspection, not a clinical error review. A class absent from the test set has zero support in the fixed-label per-class report; its per-class precision, recall, and F1 require cautious interpretation.
 
 The repeated-seed script additionally reports:
 
@@ -88,7 +96,7 @@ The repeated-seed script additionally reports:
 - Accuracy differences from persistence.
 - Paired patient-level bootstrap percentile intervals for those accuracy differences within each run.
 - The proportion of seed runs in which each model beats persistence.
-- Summary variation across random seeds.
+- Summary variation across random seeds for accuracy, balanced accuracy, macro precision, macro recall, and macro-F1.
 
 The bootstrap resamples test participants and retains all test windows belonging to each sampled participant. The same sampled participants are used for the model and persistence predictions, making the comparison paired. These are simulation diagnostics for the generated experiment. They are not clinical confidence intervals and should not be used as such.
 

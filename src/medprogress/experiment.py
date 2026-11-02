@@ -13,6 +13,7 @@ from .causal import simulate_treatment_effect
 from .data import TARGET_COL, create_forecast_examples, make_synthetic_cohort, split_by_patient
 from .evaluation import (
     benchmark_modalities,
+    classification_metrics,
     evaluate_missingness_stress,
     subgroup_metrics,
     train_neural_fusion,
@@ -67,6 +68,9 @@ def run_experiment(
         "model": "Neural multimodal fusion",
         "feature_group": "Multimodal fusion",
         "accuracy": neural_metrics["accuracy"],
+        "balanced_accuracy": neural_metrics["balanced_accuracy"],
+        "macro_precision": neural_metrics["macro_precision"],
+        "macro_recall": neural_metrics["macro_recall"],
         "macro_f1": neural_metrics["macro_f1"],
         "n_test_examples": neural_metrics["n_test_examples"],
     }])
@@ -74,6 +78,16 @@ def run_experiment(
 
     missingness = evaluate_missingness_stress(splits.train, splits.test, seed=seed)
     fairness = subgroup_metrics(splits.test, neural_predictions, splits.train)
+    y_test = splits.test[TARGET_COL].astype(int).to_numpy()
+    model_diagnostics = {
+        "Random Forest (multimodal fusion)": classification_metrics(
+            y_test, rf_predictions["Multimodal fusion"]
+        ),
+        "Logistic Regression (multimodal fusion)": classification_metrics(
+            y_test, lr_predictions["Multimodal fusion"]
+        ),
+        "Neural multimodal fusion": neural_metrics,
+    }
     _, causal = simulate_treatment_effect(seed=seed)
 
     return {
@@ -87,6 +101,7 @@ def run_experiment(
         "logistic_regression_predictions": lr_predictions["Multimodal fusion"],
         "neural_predictions": neural_predictions,
         "neural_metrics": neural_metrics,
+        "model_diagnostics": model_diagnostics,
         "training_history": history,
         "missingness": missingness,
         "fairness": fairness,

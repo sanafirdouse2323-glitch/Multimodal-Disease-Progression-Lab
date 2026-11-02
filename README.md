@@ -166,7 +166,7 @@ Run the repeated-seed evaluation across all three scenarios:
 
     python scripts/evaluate_progression_scenarios.py --patients 400 --seeds 10 --epochs 5 --bootstrap-replicates 500 --runs-output progression_scenario_runs.csv --summary-output progression_scenario_summary.csv
 
-The repeated-seed script writes one CSV with per-run results and another with aggregated scenario summaries. It compares Random Forest, Logistic Regression, and neural fusion against persistence, includes modality ablations, records changed-stage metrics, and calculates paired patient-level bootstrap intervals for accuracy differences. These CSV files are generated outputs; I do not treat them as source files, and I do not commit them unless there is a specific reason to preserve a result.
+The repeated-seed script writes one CSV with per-run results and another with aggregated scenario summaries. It compares Random Forest, Logistic Regression, and neural fusion against persistence, includes modality ablations, records accuracy, balanced accuracy, macro precision/recall/F1 and changed-stage metrics, and calculates paired patient-level bootstrap intervals for accuracy differences. The scenario summary includes means and seed-to-seed standard deviations for the aggregate classification metrics. The dashboard also provides per-class precision, recall, F1, confusion matrices, and a downloadable set of held-out examples where at least one classifier was incorrect. These CSV files are generated outputs; I do not treat them as source files, and I do not commit them unless there is a specific reason to preserve a result.
 
 ## Use a spreadsheet of my own data
 

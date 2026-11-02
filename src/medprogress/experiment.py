@@ -68,6 +68,9 @@ def run_experiment(
         "model": "Neural multimodal fusion",
         "feature_group": "Multimodal fusion",
         "accuracy": neural_metrics["accuracy"],
+        "balanced_accuracy": neural_metrics["balanced_accuracy"],
+        "macro_precision": neural_metrics["macro_precision"],
+        "macro_recall": neural_metrics["macro_recall"],
         "macro_f1": neural_metrics["macro_f1"],
         "n_test_examples": neural_metrics["n_test_examples"],
     }])

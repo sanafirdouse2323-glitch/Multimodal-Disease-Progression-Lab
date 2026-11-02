@@ -924,12 +924,12 @@ with data_tab:
         st.info("No classification errors were found for these test examples.")
     else:
         st.dataframe(error_rows.head(50), use_container_width=True, hide_index=True)
-        st.download_button(
-            "Download held-out error examples (CSV)",
-            data=error_rows.to_csv(index=False).encode("utf-8"),
-            file_name="held_out_error_analysis.csv",
-            mime="text/csv",
-        )
+    st.download_button(
+        "Download held-out error examples (CSV)",
+        data=error_rows.to_csv(index=False).encode("utf-8"),
+        file_name="held_out_error_analysis.csv",
+        mime="text/csv",
+    )
     st.download_button(
         "Download experiment summary (JSON)",
         data=json.dumps({

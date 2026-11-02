@@ -74,6 +74,8 @@ def classification_metrics(y_true, y_pred) -> dict[str, Any]:
         raise ValueError("True labels and predictions must be one-dimensional arrays of equal length")
     if len(y_true) == 0:
         raise ValueError("At least one test example is required for classification metrics")
+    if not np.isin(y_true, STAGE_LABELS).all() or not np.isin(y_pred, STAGE_LABELS).all():
+        raise ValueError(f"Stage labels and predictions must be in {STAGE_LABELS}")
 
     report = classification_report(
         y_true, y_pred, labels=STAGE_LABELS, output_dict=True, zero_division=0

@@ -12,7 +12,13 @@ import torch
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, classification_report, f1_score
+from sklearn.metrics import (
+    accuracy_score,
+    balanced_accuracy_score,
+    classification_report,
+    confusion_matrix,
+    f1_score,
+)
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from torch import nn
@@ -61,13 +67,27 @@ class Preprocessor:
 
 
 def classification_metrics(y_true, y_pred) -> dict[str, Any]:
+    """Return aggregate, class-level, and confusion-matrix metrics for fixed stage labels."""
+    y_true = np.asarray(y_true, dtype=int)
+    y_pred = np.asarray(y_pred, dtype=int)
+    if y_true.ndim != 1 or y_pred.ndim != 1 or len(y_true) != len(y_pred):
+        raise ValueError("True labels and predictions must be one-dimensional arrays of equal length")
+    if len(y_true) == 0:
+        raise ValueError("At least one test example is required for classification metrics")
+
+    report = classification_report(
+        y_true, y_pred, labels=STAGE_LABELS, output_dict=True, zero_division=0
+    )
+    matrix = confusion_matrix(y_true, y_pred, labels=STAGE_LABELS)
     return {
         "n_test_examples": int(len(y_true)),
         "accuracy": float(accuracy_score(y_true, y_pred)),
+        "balanced_accuracy": float(balanced_accuracy_score(y_true, y_pred)),
+        "macro_precision": float(report["macro avg"]["precision"]),
+        "macro_recall": float(report["macro avg"]["recall"]),
         "macro_f1": float(f1_score(y_true, y_pred, labels=STAGE_LABELS, average="macro", zero_division=0)),
-        "per_class": classification_report(
-            y_true, y_pred, labels=STAGE_LABELS, output_dict=True, zero_division=0
-        ),
+        "confusion_matrix": matrix.astype(int).tolist(),
+        "per_class": report,
     }
 
 
@@ -114,6 +134,9 @@ def benchmark_modalities(
             "model": kind.replace("_", " ").title(),
             "feature_group": group,
             "accuracy": metrics["accuracy"],
+            "balanced_accuracy": metrics["balanced_accuracy"],
+            "macro_precision": metrics["macro_precision"],
+            "macro_recall": metrics["macro_recall"],
             "macro_f1": metrics["macro_f1"],
             "n_test_examples": metrics["n_test_examples"],
         })
@@ -125,6 +148,9 @@ def benchmark_modalities(
             "model": "Persistence baseline",
             "feature_group": "Current stage only",
             "accuracy": persistence["accuracy"],
+            "balanced_accuracy": persistence["balanced_accuracy"],
+            "macro_precision": persistence["macro_precision"],
+            "macro_recall": persistence["macro_recall"],
             "macro_f1": persistence["macro_f1"],
             "n_test_examples": persistence["n_test_examples"],
         })
@@ -136,6 +162,9 @@ def benchmark_modalities(
             "model": f"Majority baseline (stage {majority_stage})",
             "feature_group": "Training majority class",
             "accuracy": majority["accuracy"],
+            "balanced_accuracy": majority["balanced_accuracy"],
+            "macro_precision": majority["macro_precision"],
+            "macro_recall": majority["macro_recall"],
             "macro_f1": majority["macro_f1"],
             "n_test_examples": majority["n_test_examples"],
         })
@@ -279,6 +308,9 @@ def evaluate_missingness_stress(
         rows.append({
             "additional_test_time_modality_dropout": probability,
             "accuracy": metrics["accuracy"],
+            "balanced_accuracy": metrics["balanced_accuracy"],
+            "macro_precision": metrics["macro_precision"],
+            "macro_recall": metrics["macro_recall"],
             "macro_f1": metrics["macro_f1"],
             "n_test_examples": metrics["n_test_examples"],
         })
@@ -320,6 +352,9 @@ def subgroup_metrics(test: pd.DataFrame, predictions: np.ndarray, train: pd.Data
                 "subgroup": name,
                 "n": 0,
                 "accuracy": np.nan,
+                "balanced_accuracy": np.nan,
+                "macro_precision": np.nan,
+                "macro_recall": np.nan,
                 "macro_f1": np.nan,
                 "caution": "No available test examples for this group",
             })
@@ -329,6 +364,9 @@ def subgroup_metrics(test: pd.DataFrame, predictions: np.ndarray, train: pd.Data
             "subgroup": name,
             "n": n,
             "accuracy": metrics["accuracy"],
+            "balanced_accuracy": metrics["balanced_accuracy"],
+            "macro_precision": metrics["macro_precision"],
+            "macro_recall": metrics["macro_recall"],
             "macro_f1": metrics["macro_f1"],
             "caution": "Small subgroup; descriptive only" if n < 30 else "Descriptive only; not evidence of fairness",
         })

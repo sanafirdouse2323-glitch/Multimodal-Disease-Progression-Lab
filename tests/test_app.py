@@ -55,6 +55,10 @@ def test_dashboard_renders_and_sample_experiment_completes():
         {"Stage label", "Precision", "Recall", "F1", "Support"}.issubset(columns)
         for columns in dataframe_columns
     )
+    assert any(
+        "held-out" in button.label.lower() and "error" in button.label.lower()
+        for button in app.download_button
+    )
 
 
 def test_beginner_friendly_homepage_explains_data_sources_and_whole_numbers():

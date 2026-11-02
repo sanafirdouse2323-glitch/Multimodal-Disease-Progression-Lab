@@ -1,8 +1,8 @@
 """Compare progression-signal scenarios across independent synthetic cohorts.
 
-This is a simulation audit, not clinical validation. It reports model performance
-relative to the persistence baseline and patient-level bootstrap intervals for the
-paired accuracy difference within each run.
+This is a simulation audit, not clinical validation. It reports accuracy, balanced accuracy,
+macro precision/recall/F1, model performance relative to the persistence baseline, and
+patient-level bootstrap intervals for the paired accuracy difference within each run.
 """
 from __future__ import annotations
 
@@ -18,7 +18,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from medprogress.data import TARGET_COL, create_forecast_examples, make_synthetic_cohort, split_by_patient  # noqa: E402
-from medprogress.evaluation import benchmark_modalities, train_neural_fusion  # noqa: E402
+from medprogress.evaluation import (  # noqa: E402
+    benchmark_modalities,
+    classification_metrics,
+    train_neural_fusion,
+)
 
 
 SCENARIOS = ("no_signal", "progression_signal", "difficult")
@@ -110,30 +114,15 @@ def run(args: argparse.Namespace) -> tuple[pd.DataFrame, pd.DataFrame]:
                 "Logistic Regression (multimodal)": lr_predictions["Multimodal fusion"],
                 "Neural multimodal fusion": neural_predictions,
             }
-            metric_frames = {
-                "Random Forest": rf_metrics,
-                "Logistic Regression": lr_metrics,
-            }
-            feature_group_for_model = {
-                "imaging only": "Imaging",
-                "wearables only": "Wearables",
-                "clinical/current stage": "Clinical + temporal/current stage",
-                "multimodal": "Multimodal fusion",
-            }
-
             actual_change = truth != persistence
             n_actual_changes = int(actual_change.sum())
             for model_name, predictions in model_predictions.items():
-                accuracy = float(accuracy_score(truth, predictions))
-                if model_name == "Neural multimodal fusion":
-                    macro_f1 = float(neural_metrics["macro_f1"])
-                else:
-                    estimator_name = model_name.split(" (", maxsplit=1)[0]
-                    suffix = model_name.split(" (", maxsplit=1)[1].rstrip(")")
-                    group_name = feature_group_for_model[suffix]
-                    matching = metric_frames[estimator_name]
-                    matching = matching[matching["feature_group"] == group_name]
-                    macro_f1 = float(matching.iloc[0]["macro_f1"])
+                model_metrics = classification_metrics(truth, predictions)
+                accuracy = float(model_metrics["accuracy"])
+                balanced_accuracy = float(model_metrics["balanced_accuracy"])
+                macro_precision = float(model_metrics["macro_precision"])
+                macro_recall = float(model_metrics["macro_recall"])
+                macro_f1 = float(model_metrics["macro_f1"])
 
                 predicted_change = predictions != persistence
                 true_positive = int((actual_change & predicted_change).sum())
@@ -171,6 +160,9 @@ def run(args: argparse.Namespace) -> tuple[pd.DataFrame, pd.DataFrame]:
                     "test_windows": int(len(splits.test)),
                     "model": model_name,
                     "accuracy": accuracy,
+                    "balanced_accuracy": balanced_accuracy,
+                    "macro_precision": macro_precision,
+                    "macro_recall": macro_recall,
                     "macro_f1": macro_f1,
                     "actual_change_test_windows": n_actual_changes,
                     "exact_next_stage_accuracy_on_changed_windows": exact_changed_accuracy,
@@ -191,6 +183,9 @@ def run(args: argparse.Namespace) -> tuple[pd.DataFrame, pd.DataFrame]:
             n_runs=("seed", "nunique"),
             mean_accuracy=("accuracy", "mean"),
             sd_accuracy_across_seeds=("accuracy", "std"),
+            mean_balanced_accuracy=("balanced_accuracy", "mean"),
+            mean_macro_precision=("macro_precision", "mean"),
+            mean_macro_recall=("macro_recall", "mean"),
             mean_macro_f1=("macro_f1", "mean"),
             mean_exact_changed_stage_accuracy=("exact_next_stage_accuracy_on_changed_windows", "mean"),
             mean_change_detection_precision=("change_detection_precision", "mean"),

@@ -87,7 +87,7 @@ For each held-out classification result, I report:
 - **Per-class precision, recall, F1, and support:** these show the performance and number of test examples for each stage label.
 - **Confusion matrix:** rows are actual stage labels and columns are predicted stage labels; counts are calculated on held-out test examples.
 
-The dashboard displays the aggregate measures in the model-comparison table and provides per-class metrics and confusion matrices for the Random Forest, Logistic Regression, and neural multimodal fusion models. The experiment-summary JSON also includes the detailed metrics. A class absent from the test set has zero support in the fixed-label per-class report; its per-class precision, recall, and F1 require cautious interpretation.
+The dashboard displays the aggregate measures in the model-comparison table and provides per-class metrics and confusion matrices for the Random Forest, Logistic Regression, and neural multimodal fusion models. The experiment-summary JSON also includes the detailed metrics. A held-out error-analysis table and CSV identify test examples where at least one of those classifiers disagrees with the target label; these are prediction errors for inspection, not a clinical error review. A class absent from the test set has zero support in the fixed-label per-class report; its per-class precision, recall, and F1 require cautious interpretation.
 
 The repeated-seed script additionally reports:
 

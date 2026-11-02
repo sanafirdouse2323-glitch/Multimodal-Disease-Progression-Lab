@@ -89,7 +89,7 @@ I compare the following approaches:
 - **Logistic Regression:** provides the same feature-group comparisons using a linear classifier.
 - **Neural multimodal fusion:** uses separate small neural-network encoders for imaging-related, wearable-style, and clinical/temporal inputs, then combines their representations for four-class prediction.
 
-I report accuracy and macro-F1. Accuracy measures the fraction of correct predictions. Macro-F1 calculates F1 for each of the four stage labels and averages the class scores equally, so performance on less common labels is not hidden by the largest class.
+I report accuracy, balanced accuracy, macro precision, macro recall, and macro-F1. Accuracy measures the fraction of correct predictions. Balanced accuracy averages recall across classes represented in the test set. Macro precision, recall, and F1 weight the four defined stage labels equally. The dashboard also shows per-class precision, recall, F1 and support, together with confusion matrices for the Random Forest, Logistic Regression, and neural multimodal fusion models. Macro-F1 and balanced accuracy are different metrics, so I label them separately.
 
 I also report exact next-stage accuracy on test windows where the stage actually changed, together with precision, recall, and F1 for detecting whether any stage change occurred. I added these measures because an overall score can look high when most next-visit labels stay unchanged.
 

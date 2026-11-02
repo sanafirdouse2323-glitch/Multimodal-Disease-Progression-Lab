@@ -42,6 +42,19 @@ def test_dashboard_renders_and_sample_experiment_completes():
     assert len(app.tabs) == 6
     assert any("What did the model predict for the next visit?" in item.value for item in app.subheader)
     assert any("Start here: how this demo works" in item.value for item in app.subheader)
+    dataframe_columns = [
+        set(frame.value.columns)
+        for frame in app.dataframe
+        if hasattr(frame.value, "columns")
+    ]
+    assert any(
+        {"Accuracy", "Balanced accuracy", "Macro precision", "Macro recall", "Macro F1"}.issubset(columns)
+        for columns in dataframe_columns
+    )
+    assert any(
+        {"Stage label", "Precision", "Recall", "F1", "Support"}.issubset(columns)
+        for columns in dataframe_columns
+    )
 
 
 def test_beginner_friendly_homepage_explains_data_sources_and_whole_numbers():

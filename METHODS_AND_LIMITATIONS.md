@@ -83,7 +83,7 @@ For each held-out classification result, I report:
 
 - **Accuracy:** the fraction of test predictions that are correct.
 - **Balanced accuracy:** the average recall across the classes represented in the test labels. Unlike ordinary accuracy, this gives each represented class equal weight.
-- **Macro precision, macro recall, and macro-F1:** each metric is calculated across the four defined stage labels with equal class weighting. Macro-F1 is not the same as balanced accuracy.
+- **Macro precision, macro recall, and macro-F1:** each metric is calculated across the four defined stage labels with equal class weighting. Macro-F1 is not the same as balanced accuracy. When all four stage labels occur in the test set, balanced accuracy and fixed-label macro recall will generally be equal; if a stage is absent from the test set, balanced accuracy averages the represented classes while the fixed-label macro report still includes all four labels.
 - **Per-class precision, recall, F1, and support:** these show the performance and number of test examples for each stage label.
 - **Confusion matrix:** rows are actual stage labels and columns are predicted stage labels; counts are calculated on held-out test examples.
 

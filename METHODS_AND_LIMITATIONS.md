@@ -22,7 +22,7 @@ For participant i, let the visits be ordered by their observed time. For a visit
 
 The target is one of four generic integer labels: 0, 1, 2, or 3. The code does not attach a clinical definition to those labels. A data owner must define and document any mapping before using a supplied dataset.
 
-Because visit gaps are not fixed, the task is not a fixed-horizon forecast. It predicts the next recorded label, even if different examples have different time intervals. The next-visit interval is recorded for interpretation and export, but it is not a model input. The feature visit_gap_scaled represents the interval since the previous observed visit.
+Because visit gaps are not fixed, the task is not a fixed-horizon forecast. It predicts the next recorded label, even if different examples have different time intervals. The interval until the next visit is recorded for interpretation and export, but it is not known to the model at prediction time and is not a model input. Predictions are therefore not conditioned on a specified future follow-up interval, and evaluation combines examples with different next-visit intervals. The feature visit_gap_scaled represents the interval since the previous observed visit.
 
 ## 3. Synthetic data design
 
@@ -134,7 +134,7 @@ This exercise is kept separate from the progression cohort. Even when a user upl
 
 ## 11. Descriptive subgroup summaries
 
-The app reports descriptive metrics for numeric group codes 0 and 1 and for age groups split at the training-set median, when those values are available. The software does not infer what the numeric group codes represent. Missing values can leave a group empty.
+The app reports descriptive metrics for numeric group codes 0 and 1 and for age groups split at the median age among training prediction windows, when those values are available. Because age is repeated across a participant's windows, a participant with more windows contributes more weight to this median. The reported subgroup metrics and counts are calculated over test prediction windows, not aggregated once per participant. The software does not infer what the numeric group codes represent. Missing values can leave a group empty.
 
 These summaries are not a fairness audit. A proper fairness assessment would require a clearly justified subgroup definition, suitable sample sizes, uncertainty estimates, clinically relevant metrics, analysis of measurement and label quality, and external validation.
 

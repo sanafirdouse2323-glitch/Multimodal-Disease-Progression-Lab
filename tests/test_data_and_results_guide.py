@@ -109,3 +109,15 @@ def test_upload_guide_matches_the_supported_csv_inputs_and_privacy_rules():
     assert "Do not upload" in guide
     assert "max_upload_size=20" in app_source
     assert "UPLOAD_REQUIRED_COLUMNS = [\"patient_id\", \"time_months\", \"current_stage\"]" in data_source
+
+
+def test_guides_explain_follow_up_interval_and_window_weighted_subgroups():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    methods = (ROOT / "METHODS_AND_LIMITATIONS.md").read_text(encoding="utf-8")
+    guide = (ROOT / "DATA_AND_RESULTS_GUIDE.md").read_text(encoding="utf-8")
+
+    assert "not conditioned on a specified future follow-up interval" in readme
+    assert "evaluation combines examples with different next-visit intervals" in methods
+    assert "median age among training prediction windows" in guide
+    assert "not aggregated once per participant" in methods
+    assert "intersectional groups are not calculated" in guide

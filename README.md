@@ -61,11 +61,11 @@ The dashboard also provides separate views for prediction results, data-group co
 
 Each participant has a sequence of visits. For a given visit, the model receives features recorded at that visit and predicts the stage label recorded at the participant's next observed visit.
 
-For example, if the stage code is 1 at month 6 and the next recorded stage code is 2 at month 12, the month-6 example has target label 2. The time between visits can vary. I therefore describe this as **next-observed-visit classification**, not a fixed 6-month, 12-month, or other fixed-horizon forecast.
+For example, if the stage code is 1 at month 6 and the next recorded stage code is 2 at month 12, the month-6 example has target label 2. The time between visits can vary. I therefore describe this as **next-observed-visit classification**, not a fixed 6-month, 12-month, or other fixed-horizon forecast. The interval until the next visit is not known to the model at prediction time and is not a model input, so its predictions are not conditioned on a specified future follow-up interval.
 
 The stage labels 0, 1, 2, and 3 are generic codes in this prototype. Their meaning depends on the mapping chosen by whoever supplies a dataset. The software does not define or validate a medical staging system.
 
-I split data by participant, rather than randomly splitting individual visit rows. The default split is 60% training participants, 20% validation participants, and 20% test participants. This keeps visits belonging to one participant in one partition. For the neural model, I fit imputation and standardisation values using the training partition only. I select the neural checkpoint using validation macro-F1; I do not use test labels for training or checkpoint selection.
+I use a seeded random split of participants—not individual visit rows—into 60% training, 20% validation, and 20% test groups. The split is not stratified by target stage, so some stage labels may be absent from validation or test. All visits from one participant remain in one partition. For the neural model, I fit imputation and standardisation values using the training partition only. I select the neural checkpoint using validation macro-F1; I do not use test labels for training or checkpoint selection.
 
 ## The three synthetic scenarios
 

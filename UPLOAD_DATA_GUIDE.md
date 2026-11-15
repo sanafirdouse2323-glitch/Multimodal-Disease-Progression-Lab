@@ -77,7 +77,7 @@ Passing file validation confirms only that the input meets these structural chec
 4. Select **Run on my spreadsheet**.
 5. Review the output alongside its limitations.
 
-For either format, progression analysis uses the supplied visit and feature values. The separate causal-effect tab always uses its own synthetic dataset; it does not estimate a treatment effect from your uploaded CSV.
+For either format, progression analysis uses the supplied visit and feature values. The causal-effect tab always uses a separate synthetic dataset; it does not estimate a treatment effect from your uploaded CSV.
 
 ## Privacy and responsible use
 

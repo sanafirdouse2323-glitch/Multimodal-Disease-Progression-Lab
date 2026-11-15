@@ -1,120 +1,86 @@
-# Using My CSV Upload Option
+# CSV Upload Guide
 
-For an explanation of every model input, the synthetic example, and the meaning of the dashboard outputs, see [DATA_AND_RESULTS_GUIDE.md](DATA_AND_RESULTS_GUIDE.md).
+This page explains the two CSV formats accepted by the dashboard. For the prediction task, model inputs, metrics, and result tabs, see [DATA_AND_RESULTS_GUIDE.md](DATA_AND_RESULTS_GUIDE.md).
 
-The homepage first offers **Enter simple numbers** as a straightforward starting point, followed by **Synthetic demo** for a more advanced example and **Upload CSV** for a prepared file. The data-source choices, empty CSV template download, and experiment settings are grouped in the centre of the page. This guide explains the spreadsheet formats. Visitors who do not already have a research CSV are very welcome to begin with the pre-filled number table.
+Before uploading, remember that the hosted website is public. Do not upload names, dates of birth, medical record numbers, identifiable or confidential health information, or data you are not authorised to use.
 
-Please read the privacy and scope notes before uploading anything.
+## Choose a format
 
-## The simple number sheet
+The app accepts CSV files up to 20 MB. It supports two formats.
 
-I provide a beginner-friendly four-column format for people who want to work with numbers rather than a detailed research CSV.
+### 1. Simple number sheet
 
-| Column | What to enter |
+Use one row per person and these exact column headings:
+
+| Column | Meaning |
 |---|---|
-| **Person number** | A different positive whole number for each person, such as 1, 2, 3. |
-| **Month 0 stage** | The stage label recorded at the starting visit. |
-| **Month 6 stage** | The stage label recorded at month 6. |
-| **Month 12 stage** | The stage label recorded at month 12. |
+| `Person number` | A unique positive whole number for each person. |
+| `Month 0 stage` | Stage code at month 0. |
+| `Month 6 stage` | Stage code at month 6. |
+| `Month 12 stage` | Stage code at month 12. |
 
-Use whole numbers only—no decimal points. Stage labels must be 0, 1, 2, or 3. These are generic category labels for this demonstration; they are not diagnoses or a validated medical scale. Each row is one person, with three visits at months 0, 6, and 12.
+Enter whole numbers only. Stage codes must be 0, 1, 2, or 3. Each person number must be unique, and every cell must be filled. At least 10 people are required.
 
-The homepage starts this table with 30 artificial example rows. You can edit the numbers, add or remove rows, or download the blank number sheet. You can upload that same four-column sheet through **Upload CSV**; the app recognises it and converts it into visit records.
+The homepage opens with 30 pre-filled artificial examples. You can edit that table or download the blank four-column sheet. The app also recognises a CSV containing these four headings and converts each row into visits at months 0, 6, and 12.
 
-**Important scope note:** the simple number sheet contains visit times and stage labels only. It does not contain image or wearable-device measurements. Results from this route are not a full multimodal analysis. To compare those data groups, use the detailed CSV format below and supply pre-computed numerical features.
+This format contains only visit times and stage codes. It does not provide imaging, wearable, age, or laboratory features, so it is not a multimodal input.
 
-## What I accept—and what I do not accept
+### 2. Detailed visit-level CSV
 
-I accept a **CSV table with one row per participant visit**. The table can contain stage labels, visit times, and optional numerical features.
+Use one row per participant visit. Keep the same non-identifying `patient_id` for all visits belonging to one person.
 
-I do not accept or process raw medical images, MRI files, X-ray files, image folders, raw wearable sensor recordings, or other raw media. The columns named img_0 to img_7 and wear_0 to wear_5 must contain numerical features that have already been extracted using a method you are authorised to use. This app does not perform image feature extraction or raw sensor processing.
+**Required columns**
 
-The uploader currently has a 20 MB file-size limit.
-
-## Privacy and research responsibility
-
-The public Render website receives the file uploaded through the browser. **Please do not upload names, dates of birth, medical record numbers, identifiable health records, confidential information, or data that you are not authorised to use.**
-
-For sensitive or regulated research data, I recommend running the repository locally inside an institutionally approved secure environment and following the relevant ethics, consent, security, and data-governance requirements.
-
-The validation code checks the file structure and value formats. It does not confirm that the dataset is clinically meaningful, representative, unbiased, legally usable, or appropriate for a research conclusion. Passing validation is not the same as ethical approval or clinical validation.
-
-## How I expect the CSV to be organised
-
-Each row represents one visit for one participant. Use the same non-identifying study code for every visit belonging to the same participant. A participant must have at least two visits so that the app can create a current-visit/next-visit example.
-
-The application requires at least 10 unique participants to create the train, validation, and test partitions. This is a technical minimum, not a recommended research sample size. I flag cohorts below 30 participants as small, and a larger, justified sample is normally needed for stable research estimates.
-
-The app sorts each participant's visits by time. Each participant must have distinct visit times. Use non-negative numeric months from that participant's baseline visit, such as 0, 6, and 12.
-
-The CSV reader initially reads values as text so that participant codes such as 001 are not silently converted to the number 1. I then validate and convert the documented numeric columns.
-
-## Required columns
-
-| Column | What I expect |
+| Column | Requirement |
 |---|---|
-| **patient_id** | A non-identifying participant code, such as SUBJECT_001. Do not use a person's name or medical record number. Keep the same code across that participant's visits. |
-| **time_months** | Numeric months since that participant's baseline visit. Values must be zero or positive. A participant cannot have two visits at the same time. |
-| **current_stage** | An integer code of 0, 1, 2, or 3 for the stage recorded at that visit. If your project uses a different staging system, define and document a defensible mapping before uploading. |
+| `patient_id` | Nonblank participant code. Do not use names or medical record numbers. |
+| `time_months` | Numeric months since that participant's baseline visit; must be zero or positive. |
+| `current_stage` | Integer stage code: 0, 1, 2, or 3. |
 
-The model target is the stage at the **next observed visit**. It is not a fixed 6-month or 12-month target. The software does not know what the stage codes mean medically.
+**Optional numerical columns**
 
-## Optional numerical columns
-
-| Column | What I use it for |
+| Column | Accepted values |
 |---|---|
-| **age_years** | Optional age in years. Nonblank values must be between 0 and 120. |
-| **sex_binary** | Optional numeric group code. Nonblank values must be 0 or 1. I use these values only to form descriptive groups; the app does not infer what either code means. Keep the mapping consistent and document it outside the app. |
-| **lab_a, lab_b** | Two generic numerical measurement fields. Map measurements to these names only when their meaning is genuinely appropriate, and keep a record of the mapping. |
-| **img_0 to img_7** | Eight numerical imaging-related features that have already been extracted from images. These columns are not image pixels or image files. |
-| **wear_0 to wear_5** | Six numerical wearable-related features that have already been computed from sensor data. These columns are not raw sensor streams. |
+| `age_years` | Blank or a number from 0 to 120. |
+| `sex_binary` | Blank, 0, or 1. Document what the codes mean in your own data records; the app does not infer their meaning. |
+| `lab_a`, `lab_b` | Blank or numeric values. Units and meanings are not defined by the app. |
+| `img_0` to `img_7` | Blank or pre-computed numerical imaging-related features. |
+| `wear_0` to `wear_5` | Blank or pre-computed numerical wearable-related features. |
 
-You may omit optional columns or leave feature values blank. If all values for an imaging or wearable group are missing in a row, the app marks that modality as missing. During model fitting, the implemented preprocessing pipelines handle missing numerical feature values using training-data imputation.
+The image and wearable columns are feature values, not image files, pixel data, or raw sensor recordings. The app does not extract features from raw medical images or process raw wearable streams. Optional columns may be omitted; extra columns are ignored and reported in an upload warning.
 
-Extra columns are ignored and listed in a warning. I do not recommend renaming unrelated variables merely to make a file pass validation.
+## Validation rules
 
-## How I validate the file
+For a detailed CSV, the app checks that:
 
-The current validator checks that:
-
-- The file can be read as a CSV and has unique column names.
-- The required columns are present.
+- The required columns are present and column names are unique.
 - Participant IDs are not blank.
-- Time, stage, and optional feature columns contain numeric values or permitted blanks.
-- Time values are non-negative.
-- Stage values are integer codes 0, 1, 2, or 3.
-- Age values, when supplied, are between 0 and 120.
-- The optional group code uses 0 or 1.
-- At least 10 unique participants are present.
+- Numeric fields contain numbers or permitted blanks; infinite values are rejected.
+- Visit times are non-negative.
+- Stage codes are whole numbers from 0 to 3.
+- Nonblank ages are between 0 and 120, and nonblank `sex_binary` values are 0 or 1.
+- There are at least 10 unique participants.
 - Every participant has at least two visits.
-- A participant does not have duplicate visit times.
+- A participant has no duplicate visit times.
 
-A file can pass these structural checks and still fail when I start the experiment. The training partition must contain at least two different next-visit stage classes for the classifiers to train. A small sample, rare stage labels, or limited variation can make estimates unstable.
+The CSV reader initially treats values as text so identifiers such as `001` are not silently converted to `1`. Numeric fields are converted after the headers and values are checked.
 
-## What happens after upload
+The app then creates consecutive-visit prediction examples and makes a seeded, participant-level 60/20/20 train/validation/test split. The split is not stratified by stage. The training partition must contain at least two different next-visit stage codes for the classifiers to run; the app does not guarantee that every stage appears in validation or test. The minimum of 10 participants is a software requirement, not a scientifically adequate sample-size recommendation.
 
-1. I read the CSV and validate its structure.
-2. I convert the accepted columns into the feature format used by the experiment.
-3. I create next-observed-visit examples from consecutive visits for each participant.
-4. I split participants—not individual visit rows—into training, validation, and test partitions.
-5. I fit and evaluate the progression models on the uploaded feature-level cohort.
-6. I show the model comparisons, modality results, added missingness stress test, and descriptive subgroup metrics.
+Passing file validation confirms only that the input meets these structural checks. It does not establish that the data are clinically meaningful, representative, unbiased, ethically approved, or legally usable.
 
-The causal-effect tab is different: it always uses a separate synthetic treatment-effect simulation. **It does not estimate a treatment effect from the CSV you upload.**
+## Upload steps
 
-## How to use the detailed CSV option
+1. Select **Upload CSV** on the homepage.
+2. Use **Download empty CSV template** for the detailed visit-level format, or prepare the four-column simple number sheet.
+3. Select your CSV file and review the validation message and preview.
+4. Select **Run on my spreadsheet**.
+5. Review the output alongside its limitations.
 
-1. Choose **Upload CSV** in the centre of the homepage.
-2. Select **Download empty CSV template** in the centre panel to get the supported column names.
-3. Prepare one row per participant visit, using the detailed required and optional columns above.
-4. Choose your completed CSV file and read the validation message and preview.
-5. Select **Run on my spreadsheet**.
-6. Review the results and their limitations before interpreting them.
+For either format, progression analysis uses the supplied visit and feature values. The separate causal-effect tab always uses its own synthetic dataset; it does not estimate a treatment effect from your uploaded CSV.
 
-The detailed template contains column names only. It is intended for users who already have a visit-level feature table. Visitors who only have simple stage numbers can use the separate four-column number sheet instead.
+## Privacy and responsible use
 
-## What I do with the uploaded file
+The public Render website receives the uploaded file. Use only non-identifying participant codes and upload data only when you have the necessary permissions. For sensitive or regulated research data, use an institutionally approved secure environment and follow the relevant ethics, consent, security, and data-governance requirements.
 
-The current app uses the uploaded cohort for next-visit progression modelling, modality comparisons, missing-modality stress tests, and subgroup summaries. It does not use the uploaded cohort for the separate causal-effect simulation.
-
-I do not claim that format checks establish clinical validity, fairness, causality, or external generalisability. I treat the output as exploratory software results, not a diagnosis, prognosis for patient care, or treatment recommendation.
+Downloaded prediction files include participant codes from the uploaded data. Handle exported files under the same data-protection rules as the source dataset.

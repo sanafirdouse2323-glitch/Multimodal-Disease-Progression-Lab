@@ -114,7 +114,7 @@ The table below records the mean overall accuracy from GitHub Actions run 43 on 
 
 In this run, the multimodal models did not beat persistence on mean overall accuracy in any scenario. The results show that planting a relationship in the data generator does not automatically mean that the current modelling pipeline learns a useful next-stage classifier. This remains an implementation and modelling problem to investigate.
 
-The values above are a dated synthetic result, not a clinical estimate and not a guarantee for other environments. Later workflow runs 85, 86, and 88 passed their configured tests and repeated-seed commands, but no result artifacts were retained from those runs. The workflow change proposed in PR #10 uploads the per-run and summary CSVs for future executions. Running the script locally also creates both CSVs at the paths selected by its command-line options.
+The values above are a dated synthetic result, not a clinical estimate and not a guarantee for other environments. Later workflow runs 85, 86, and 88 passed their configured tests and repeated-seed commands, but no result artifacts were retained from those runs. The updated PR #10 workflow has now saved the per-run and summary CSVs from successful run 93 in the [progression-scenario-results-93 artifact](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/actions/runs/43664302014), which GitHub lists as expiring on 15 December 2026. This workflow change remains on the PR branch, not main. Running the script locally also creates both CSVs at the paths selected by its command-line options.
 
 ## 9. Missing-modality experiment
 

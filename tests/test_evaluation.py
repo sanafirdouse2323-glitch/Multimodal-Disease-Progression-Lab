@@ -58,6 +58,32 @@ def test_classification_metrics_reject_unknown_stage_labels():
     else:
         raise AssertionError("Labels outside the defined stage range must be rejected")
 
+    
+def test_classification_metrics_reject_fractional_and_non_finite_labels():
+    invalid_cases = (
+        ([0, 1.5], [0, 1]),
+        ([0, 1], [0, 1.5]),
+        ([0, np.nan], [0, 1]),
+        ([0, 1], [0, np.inf]),
+    )
+    for y_true, y_pred in invalid_cases:
+        try:
+            classification_metrics(y_true, y_pred)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("Non-integer or non-finite labels must be rejected")
+
+
+def test_fixed_label_macro_metrics_and_balanced_accuracy_differ_when_a_class_is_absent():
+    metrics = classification_metrics([0, 1], [0, 1])
+
+    assert metrics["balanced_accuracy"] == 1.0
+    assert metrics["macro_recall"] == 0.5
+    assert metrics["macro_f1"] == 0.5
+    assert metrics["per_class"]["2"]["support"] == 0
+    assert metrics["per_class"]["3"]["support"] == 0
+
 
 def test_preprocessor_is_fitted_from_training_values_only():
     train = np.array([[1.0, np.nan], [3.0, 4.0]])

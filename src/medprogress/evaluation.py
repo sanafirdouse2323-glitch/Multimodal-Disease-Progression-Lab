@@ -12,7 +12,13 @@ import torch
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, classification_report, f1_score
+from sklearn.metrics import (
+    accuracy_score,
+    balanced_accuracy_score,
+    classification_report,
+    confusion_matrix,
+    f1_score,
+)
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from torch import nn
@@ -61,15 +67,47 @@ class Preprocessor:
 
 
 def classification_metrics(y_true, y_pred) -> dict[str, Any]:
+    """Return aggregate, class-level, and confusion-matrix metrics for fixed stage labels."""
+    raw_true = np.asarray(y_true)
+    raw_pred = np.asarray(y_pred)
+    if raw_true.ndim != 1 or raw_pred.ndim != 1 or len(raw_true) != len(raw_pred):
+        raise ValueError("True labels and predictions must be one-dimensional arrays of equal length")
+    if len(raw_true) == 0:
+        raise ValueError("At least one test example is required for classification metrics")
+
+    try:
+        numeric_true = raw_true.astype(np.float64)
+        numeric_pred = raw_pred.astype(np.float64)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("True labels and predictions must contain finite integer stage codes") from exc
+
+    if (
+        not np.isfinite(numeric_true).all()
+        or not np.isfinite(numeric_pred).all()
+        or not np.equal(numeric_true, np.floor(numeric_true)).all()
+        or not np.equal(numeric_pred, np.floor(numeric_pred)).all()
+    ):
+        raise ValueError("True labels and predictions must contain finite integer stage codes")
+
+    y_true = numeric_true.astype(np.int64)
+    y_pred = numeric_pred.astype(np.int64)
+    if not np.isin(y_true, STAGE_LABELS).all() or not np.isin(y_pred, STAGE_LABELS).all():
+        raise ValueError(f"Stage labels and predictions must be in {STAGE_LABELS}")
+
+    report = classification_report(
+        y_true, y_pred, labels=STAGE_LABELS, output_dict=True, zero_division=0
+    )
+    matrix = confusion_matrix(y_true, y_pred, labels=STAGE_LABELS)
     return {
         "n_test_examples": int(len(y_true)),
         "accuracy": float(accuracy_score(y_true, y_pred)),
+        "balanced_accuracy": float(balanced_accuracy_score(y_true, y_pred)),
+        "macro_precision": float(report["macro avg"]["precision"]),
+        "macro_recall": float(report["macro avg"]["recall"]),
         "macro_f1": float(f1_score(y_true, y_pred, labels=STAGE_LABELS, average="macro", zero_division=0)),
-        "per_class": classification_report(
-            y_true, y_pred, labels=STAGE_LABELS, output_dict=True, zero_division=0
-        ),
+        "confusion_matrix": matrix.astype(int).tolist(),
+        "per_class": report,
     }
-
 
 def build_classical_model(kind: str, seed: int = 42) -> Pipeline:
     if kind == "random_forest":
@@ -114,6 +152,9 @@ def benchmark_modalities(
             "model": kind.replace("_", " ").title(),
             "feature_group": group,
             "accuracy": metrics["accuracy"],
+            "balanced_accuracy": metrics["balanced_accuracy"],
+            "macro_precision": metrics["macro_precision"],
+            "macro_recall": metrics["macro_recall"],
             "macro_f1": metrics["macro_f1"],
             "n_test_examples": metrics["n_test_examples"],
         })
@@ -125,6 +166,9 @@ def benchmark_modalities(
             "model": "Persistence baseline",
             "feature_group": "Current stage only",
             "accuracy": persistence["accuracy"],
+            "balanced_accuracy": persistence["balanced_accuracy"],
+            "macro_precision": persistence["macro_precision"],
+            "macro_recall": persistence["macro_recall"],
             "macro_f1": persistence["macro_f1"],
             "n_test_examples": persistence["n_test_examples"],
         })
@@ -136,6 +180,9 @@ def benchmark_modalities(
             "model": f"Majority baseline (stage {majority_stage})",
             "feature_group": "Training majority class",
             "accuracy": majority["accuracy"],
+            "balanced_accuracy": majority["balanced_accuracy"],
+            "macro_precision": majority["macro_precision"],
+            "macro_recall": majority["macro_recall"],
             "macro_f1": majority["macro_f1"],
             "n_test_examples": majority["n_test_examples"],
         })
@@ -279,6 +326,9 @@ def evaluate_missingness_stress(
         rows.append({
             "additional_test_time_modality_dropout": probability,
             "accuracy": metrics["accuracy"],
+            "balanced_accuracy": metrics["balanced_accuracy"],
+            "macro_precision": metrics["macro_precision"],
+            "macro_recall": metrics["macro_recall"],
             "macro_f1": metrics["macro_f1"],
             "n_test_examples": metrics["n_test_examples"],
         })
@@ -320,6 +370,9 @@ def subgroup_metrics(test: pd.DataFrame, predictions: np.ndarray, train: pd.Data
                 "subgroup": name,
                 "n": 0,
                 "accuracy": np.nan,
+                "balanced_accuracy": np.nan,
+                "macro_precision": np.nan,
+                "macro_recall": np.nan,
                 "macro_f1": np.nan,
                 "caution": "No available test examples for this group",
             })
@@ -329,6 +382,9 @@ def subgroup_metrics(test: pd.DataFrame, predictions: np.ndarray, train: pd.Data
             "subgroup": name,
             "n": n,
             "accuracy": metrics["accuracy"],
+            "balanced_accuracy": metrics["balanced_accuracy"],
+            "macro_precision": metrics["macro_precision"],
+            "macro_recall": metrics["macro_recall"],
             "macro_f1": metrics["macro_f1"],
             "caution": "Small subgroup; descriptive only" if n < 30 else "Descriptive only; not evidence of fairness",
         })

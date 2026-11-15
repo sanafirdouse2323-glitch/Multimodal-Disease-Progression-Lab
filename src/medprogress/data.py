@@ -329,6 +329,18 @@ def prepare_uploaded_cohort(raw: pd.DataFrame) -> pd.DataFrame:
     sex_values = frame["sex_binary"].dropna()
     if not sex_values.isin([0, 1]).all():
         raise ValueError("Nonblank sex_binary values must be coded consistently as 0 or 1, or left blank.")
+    sex_codes_per_patient = (
+        frame.dropna(subset=["sex_binary"])
+        .groupby("patient_id")["sex_binary"]
+        .nunique()
+    )
+    patients_with_conflicting_sex_codes = sex_codes_per_patient[sex_codes_per_patient > 1]
+    if not patients_with_conflicting_sex_codes.empty:
+        sample_ids = patients_with_conflicting_sex_codes.index.astype(str).tolist()[:3]
+        raise ValueError(
+            "Nonblank sex_binary values must be consistent across visits for each patient. "
+            f"Examples with conflicting codes: {sample_ids}"
+        )
 
     patient_count = frame["patient_id"].nunique()
     if patient_count < 10:

@@ -126,3 +126,20 @@ def test_uploaded_cohort_runs_through_experiment_pipeline():
     assert result["neural_metrics"]["n_test_examples"] > 0
     # The causal demo remains a separate simulation by design.
     assert result["causal"]["known_simulated_effect"] == -0.8
+
+
+
+def test_upload_rejects_conflicting_sex_codes_for_the_same_patient():
+    raw = _valid_upload_frame()
+    mask = (raw["patient_id"] == "SUBJECT_000") & (raw["time_months"] == 6)
+    raw.loc[mask, "sex_binary"] = 1
+
+    with pytest.raises(ValueError, match="consistent across visits"):
+        prepare_uploaded_cohort(raw)
+
+
+def test_upload_allows_blank_sex_codes_but_requires_consistency_of_nonblank_values():
+    raw = _valid_upload_frame()
+    raw.loc[(raw["patient_id"] == "SUBJECT_000") & (raw["time_months"] == 6), "sex_binary"] = np.nan
+    cohort = prepare_uploaded_cohort(raw)
+    assert cohort.loc[cohort["patient_id"] == "SUBJECT_000", "sex_binary"].isna().sum() == 1

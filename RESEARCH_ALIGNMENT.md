@@ -1,6 +1,6 @@
 # University of Bern PhD Project Alignment Audit
 
-**Audit reference:** repository `main` at commit `e63d0c5e00473c128b3f43a00a64760e2c484916`  
+**Audit snapshot:** repository `main` at commit `e63d0c5e00473c128b3f43a00a64760e2c484916` (31 October 2026). Later changes to `main` and unmerged pull requests are not covered by this snapshot.  
 **Research reference:** the University of Bern Machine Learning in Medicine PhD advertisement and the MLM Lab research background supplied for this project on 31 October 2026.
 
 This document distinguishes what the repository currently implements from what the advertised PhD project proposes. It is an implementation audit, not a claim of clinical validation or a claim that the repository reproduces the lab's research.
@@ -50,13 +50,13 @@ These controls make the current project more inspectable than a dashboard that o
 
 ## 4. Results that must not be overstated
 
-The README records a repeated-seed synthetic evaluation in which persistence had higher mean overall accuracy than the multimodal Random Forest, Logistic Regression, and neural fusion model in all three listed scenarios. In that recorded evaluation:
+The recorded benchmark comes from GitHub Actions run 43 on 29 October 2026. Persistence had higher mean overall accuracy than the multimodal Random Forest, Logistic Regression, and neural fusion model in all three listed scenarios. The values are a dated synthetic result, not a current clinical estimate:
 
 - `progression_signal`: persistence 85.28%, Random Forest 83.19%, Logistic Regression 83.93%, neural fusion 54.56%.
 - `no_signal`: persistence 85.74%, Random Forest 85.30%, Logistic Regression 84.61%, neural fusion 54.41%.
 - `difficult`: persistence 85.28%, Random Forest 84.83%, Logistic Regression 84.61%, neural fusion 56.82%.
 
-These values are recorded synthetic results, not clinical performance estimates and not guaranteed results for every environment. They show that the current models do not beat persistence on mean overall accuracy in that evaluation. That finding should remain visible in the application and in any application discussion.
+These values are recorded synthetic results, not clinical performance estimates and not guaranteed results for every environment. The workflow run's generated CSVs were not retained, so the exact per-run rows cannot now be independently recalculated from that run. The table shows that the models did not beat persistence on mean overall accuracy in that evaluation. That finding should remain visible in the application and in any application discussion.
 
 The scenario sanity test that compares a binary upward-transition AUC in the planted-signal and negative-control generators is a test of the synthetic generator's learnability. It is not evidence that the dashboard models predict real disease progression.
 

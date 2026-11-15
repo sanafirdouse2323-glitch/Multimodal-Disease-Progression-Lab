@@ -22,7 +22,7 @@ For participant i, let the visits be ordered by their observed time. For a visit
 
 The target is one of four generic integer labels: 0, 1, 2, or 3. The code does not attach a clinical definition to those labels. A data owner must define and document any mapping before using a supplied dataset.
 
-Because visit gaps are not fixed, the task is not a fixed-horizon forecast. It predicts the next recorded label, even if different examples have different time intervals.
+Because visit gaps are not fixed, the task is not a fixed-horizon forecast. It predicts the next recorded label, even if different examples have different time intervals. The interval until the next visit is recorded for interpretation and export, but it is not known to the model at prediction time and is not a model input. Predictions are therefore not conditioned on a specified future follow-up interval, and evaluation combines examples with different next-visit intervals. The feature visit_gap_scaled represents the interval since the previous observed visit.
 
 ## 3. Synthetic data design
 
@@ -48,18 +48,20 @@ The current feature table contains:
 
 - Eight imaging-related numerical columns: img_0 through img_7.
 - Six wearable-style numerical columns: wear_0 through wear_5.
-- Clinical and visit information: scaled age, a numeric group code, two generic lab fields, scaled current stage, and scaled visit gap.
+- Clinical and visit information: scaled age, `sex_binary`, two generic lab fields, scaled current stage, and scaled visit gap. The supplied `sex_binary` values are model inputs and are also used to form separate descriptive test subgroups; they are not merely reporting labels. For uploads, the validator requires nonblank codes to remain consistent across visits for the same participant.
 - Two indicators showing whether the imaging and wearable groups are missing.
 
-For classical models, the code compares four feature groups: imaging, wearables, clinical plus temporal/current-stage information, and all features combined. Random Forest uses median imputation. Logistic Regression uses median imputation followed by standardisation.
+For classical models, the code compares four feature groups: (1) the eight imaging values plus `image_missing`; (2) the six wearable values plus `wearable_missing`; (3) the six clinical/visit features, including age, `sex_binary`, labs, current stage, and the previous-visit gap; and (4) all 22 features together. The missingness indicators are included in their corresponding single-modality ablations, not in the clinical-only group. Random Forest uses median imputation. Logistic Regression uses median imputation followed by standardisation. These preprocessing steps are fitted within each model's training pipeline.
 
-The neural fusion model has separate small multilayer-perceptron encoders for imaging, wearable, and clinical/missingness inputs. It concatenates the three encoded representations and passes them through a fusion layer and a four-class output layer. The neural model uses median imputation and standardisation fitted from the training partition only. It selects the saved checkpoint using validation macro-F1.
+The Random Forest uses 180 trees, a minimum leaf size of 2, and balanced-subsample class weights. Logistic Regression uses balanced class weights and a maximum of 1,200 iterations. The neural fusion model has separate small multilayer-perceptron encoders for imaging, wearable, and clinical/missingness inputs. It concatenates the three encoded representations and passes them through a fusion layer and a four-class output layer. Neural preprocessing is fitted on training data only. The network uses Adam with a learning rate of 0.001, weight decay of 0.0001, batches of 64, and ordinary unweighted cross-entropy loss. It selects the saved checkpoint using validation macro-F1.
+
+The three model types therefore do not use identical class-weighting strategies: both classical classifiers apply class weighting, while the neural model does not. Their scores compare the implemented pipelines; they should not be interpreted as a controlled comparison of architecture alone.
 
 These are compact demonstration models. I do not describe them as a state-of-the-art architecture or as a clinically optimised system.
 
 ## 5. Data splitting and leakage controls
 
-I create forecast examples from each participant's consecutive visits. I then split unique participant IDs into training, validation, and test groups in a 60/20/20 proportion. All visits from one participant remain within one partition.
+I create forecast examples from each participant's consecutive visits. I then make a seeded random split of unique participant IDs into training, validation, and test groups in a 60/20/20 proportion. The split is not stratified by target class. All visits from one participant remain within one partition. The code checks that the training partition contains at least two target classes, but it does not guarantee that all four classes appear in validation or test. Class support can therefore vary, especially in small or imbalanced datasets.
 
 For the neural model, the imputation medians, means, and scales are computed on training features and then applied to validation and test features. The validation partition is used for neural checkpoint selection. The test partition is held for final evaluation.
 
@@ -79,7 +81,15 @@ I include the persistence baseline because consecutive stage labels may remain u
 
 ## 7. Evaluation metrics
 
-I report overall accuracy and macro-F1 for stage classification. Macro-F1 averages the per-class F1 scores equally across the four stage labels. This makes it possible to see when a model performs poorly on a less common class even if overall accuracy is high.
+For each held-out classification result, I report:
+
+- **Accuracy:** the fraction of test predictions that are correct.
+- **Balanced accuracy:** the average recall across the classes represented in the test labels. Unlike ordinary accuracy, this gives each represented class equal weight.
+- **Macro precision, macro recall, and macro-F1:** each metric is calculated across the four defined stage labels with equal class weighting. Macro-F1 is not the same as balanced accuracy. When all four stage labels occur in the test set, balanced accuracy and fixed-label macro recall will generally be equal; if a stage is absent from the test set, balanced accuracy averages the represented classes while the fixed-label macro report still includes all four labels.
+- **Per-class precision, recall, F1, and support:** these show the performance and number of test examples for each stage label.
+- **Confusion matrix:** rows are actual stage labels and columns are predicted stage labels; counts are calculated on held-out test examples.
+
+The dashboard displays the aggregate measures in the model-comparison table and provides per-class metrics and confusion matrices for the Random Forest, Logistic Regression, and neural multimodal fusion models. The experiment-summary JSON also includes the detailed metrics. A held-out error-analysis table and CSV identify test examples where at least one of those classifiers disagrees with the target label; these are prediction errors for inspection, not a clinical error review. A class absent from the test set has zero support in the fixed-label per-class report; its per-class precision, recall, and F1 require cautious interpretation.
 
 The repeated-seed script additionally reports:
 
@@ -88,13 +98,13 @@ The repeated-seed script additionally reports:
 - Accuracy differences from persistence.
 - Paired patient-level bootstrap percentile intervals for those accuracy differences within each run.
 - The proportion of seed runs in which each model beats persistence.
-- Summary variation across random seeds.
+- Summary variation across random seeds for accuracy, balanced accuracy, macro precision, macro recall, and macro-F1.
 
 The bootstrap resamples test participants and retains all test windows belonging to each sampled participant. The same sampled participants are used for the model and persistence predictions, making the comparison paired. These are simulation diagnostics for the generated experiment. They are not clinical confidence intervals and should not be used as such.
 
-## 8. Current repeated-seed results
+## 8. Recorded repeated-seed results
 
-In GitHub Actions run 43, the evaluator used 400 synthetic participants per run, 10 seeds per scenario, 5 neural epochs, and 500 patient-bootstrap replicates. The reported mean overall accuracies for the multimodal models were:
+The table below reports mean overall accuracy from successful PR-branch GitHub Actions run 108 on 15 November 2026. It used 400 synthetic participants per run, 10 seeds per scenario, 5 neural epochs, and 500 patient-bootstrap replicates. The means match the earlier recorded runs 43, 97, 100, 105, and 106.
 
 | Scenario | Persistence | Random Forest | Logistic Regression | Neural fusion |
 |---|---:|---:|---:|---:|
@@ -102,9 +112,9 @@ In GitHub Actions run 43, the evaluator used 400 synthetic participants per run,
 | no_signal | 85.74% | 85.30% | 84.61% | 54.41% |
 | difficult | 85.28% | 84.83% | 84.61% | 56.82% |
 
-In this run, the multimodal models did not beat persistence on mean overall accuracy in any scenario. The results show that planting a relationship in the data generator does not automatically mean that the current modelling pipeline learns a useful next-stage classifier. This remains an implementation and modelling problem to investigate.
+Persistence has the highest mean overall accuracy in all three scenarios. None of the multimodal models beats it on this measure. The neural model remains substantially worse. Planting a relationship in the data generator does not automatically mean that the current modelling pipeline learns a useful next-stage classifier. This remains an implementation and modelling problem to investigate.
 
-The values above are a recorded CI evaluation, not guaranteed results for every local environment. The evaluator's per-run CSVs in CI were written to temporary paths and are not stored in the repository. Running the script locally creates the per-run and summary CSVs in the paths selected by its command-line options.
+Run 108's per-run and aggregate CSVs are retained in the [progression-scenario-results-108 artifact](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/actions/runs/43676693390). GitHub lists this artifact as expiring on 15 December 2026. These are synthetic diagnostics, not clinical performance estimates or guarantees for other environments. The artifact belongs to a PR-branch run; the workflow change remains on the PR branch, not main. Running the script locally also creates both CSVs at the paths selected by its command-line options.
 
 ## 9. Missing-modality experiment
 
@@ -124,7 +134,7 @@ This exercise is kept separate from the progression cohort. Even when a user upl
 
 ## 11. Descriptive subgroup summaries
 
-The app reports descriptive metrics for numeric group codes 0 and 1 and for age groups split at the training-set median, when those values are available. The software does not infer what the numeric group codes represent. Missing values can leave a group empty.
+The app reports descriptive metrics for numeric group codes 0 and 1 and for age groups split at the median age among training prediction windows, when those values are available. Because age is repeated across a participant's windows, a participant with more windows contributes more weight to this median. The reported subgroup metrics and counts are calculated over test prediction windows, not aggregated once per participant. The software does not infer what the numeric group codes represent. The `sex_binary` values are also predictors in the classification models, so supplied values can influence predictions; subgroup reporting is not the only use of this field. Missing values can leave a group empty.
 
 These summaries are not a fairness audit. A proper fairness assessment would require a clearly justified subgroup definition, suitable sample sizes, uncertainty estimates, clinically relevant metrics, analysis of measurement and label quality, and external validation.
 

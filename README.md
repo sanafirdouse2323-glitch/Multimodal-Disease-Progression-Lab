@@ -9,7 +9,7 @@ I built this project as an educational machine-learning and research-methods pro
 
 The dashboard introduces the examples in two steps. Visitors are invited to begin with **Enter simple numbers**, which opens a pre-filled table of 30 artificial examples and runs with one click. They can then select **Synthetic demo** to explore generated imaging-related, wearable-style, and clinical/temporal features. **Upload CSV** remains available for visitors who already have a prepared dataset. The data-source choices, template download, and experiment settings are grouped in the centre of the page.
 
-The default experience uses entirely synthetic data. I do not claim that the synthetic data represent a real disease, that the generated relationships are medically established, or that the models are ready for clinical use.
+The pre-filled simple-number example and built-in Synthetic demo use artificial data. If you upload a CSV, the progression analysis uses the numerical values you provide. The separate treatment-effect exercise always uses its own synthetic data. None of these examples establishes a real disease mechanism or clinical performance.
 
 > **Important:** This is a research and learning prototype, not a diagnostic, prognostic, or treatment tool. The hosted website is public and receives uploaded files. Do not upload identifiable, confidential, or unauthorised health information. The app does not accept raw MRI, X-ray, image, or wearable sensor files.
 
@@ -61,11 +61,11 @@ The dashboard also provides separate views for prediction results, data-group co
 
 Each participant has a sequence of visits. For a given visit, the model receives features recorded at that visit and predicts the stage label recorded at the participant's next observed visit.
 
-For example, if the stage code is 1 at month 6 and the next recorded stage code is 2 at month 12, the month-6 example has target label 2. The time between visits can vary. I therefore describe this as **next-observed-visit classification**, not a fixed 6-month, 12-month, or other fixed-horizon forecast.
+For example, if the stage code is 1 at month 6 and the next recorded stage code is 2 at month 12, the month-6 example has target label 2. The time between visits can vary. I therefore describe this as **next-observed-visit classification**, not a fixed 6-month, 12-month, or other fixed-horizon forecast. The interval until the next visit is not known to the model at prediction time and is not a model input, so its predictions are not conditioned on a specified future follow-up interval.
 
 The stage labels 0, 1, 2, and 3 are generic codes in this prototype. Their meaning depends on the mapping chosen by whoever supplies a dataset. The software does not define or validate a medical staging system.
 
-I split data by participant, rather than randomly splitting individual visit rows. The default split is 60% training participants, 20% validation participants, and 20% test participants. This keeps visits belonging to one participant in one partition. For the neural model, I fit imputation and standardisation values using the training partition only. I select the neural checkpoint using validation macro-F1; I do not use test labels for training or checkpoint selection.
+I use a seeded random split of participants—not individual visit rows—into 60% training, 20% validation, and 20% test groups. The split is not stratified by target stage, so some stage labels may be absent from validation or test. All visits from one participant remain in one partition. For the neural model, I fit imputation and standardisation values using the training partition only. I select the neural checkpoint using validation macro-F1; I do not use test labels for training or checkpoint selection.
 
 ## The three synthetic scenarios
 
@@ -89,13 +89,13 @@ I compare the following approaches:
 - **Logistic Regression:** provides the same feature-group comparisons using a linear classifier.
 - **Neural multimodal fusion:** uses separate small neural-network encoders for imaging-related, wearable-style, and clinical/temporal inputs, then combines their representations for four-class prediction.
 
-I report accuracy and macro-F1. Accuracy measures the fraction of correct predictions. Macro-F1 calculates F1 for each of the four stage labels and averages the class scores equally, so performance on less common labels is not hidden by the largest class.
+I report accuracy, balanced accuracy, macro precision, macro recall, and macro-F1. Accuracy measures the fraction of correct predictions. Balanced accuracy averages recall across classes represented in the test set. Macro precision, recall, and F1 weight the four defined stage labels equally. The dashboard also shows per-class precision, recall, F1 and support, together with confusion matrices for the Random Forest, Logistic Regression, and neural multimodal fusion models. Macro-F1 and balanced accuracy are different metrics, so I label them separately.
 
 I also report exact next-stage accuracy on test windows where the stage actually changed, together with precision, recall, and F1 for detecting whether any stage change occurred. I added these measures because an overall score can look high when most next-visit labels stay unchanged.
 
-## What the current synthetic evaluation shows
+## Recorded repeated-seed synthetic benchmark
 
-I ran the repeated-seed evaluator in GitHub Actions run 43 using 400 synthetic participants per run, 10 seeds per scenario, 5 neural training epochs, and 500 patient-bootstrap replicates for each model/run comparison. The following are the mean **overall accuracy** values reported by that run:
+The table below reports mean **overall accuracy** from successful PR-branch GitHub Actions run 108 on 15 November 2026. It used 400 synthetic participants per run, 10 seeds per scenario, 5 neural training epochs, and 500 patient-bootstrap replicates. The means match the earlier recorded runs 43, 97, 100, 105, and 106:
 
 | Scenario | Persistence | Random Forest (multimodal) | Logistic Regression (multimodal) | Neural multimodal fusion |
 |---|---:|---:|---:|---:|
@@ -103,9 +103,11 @@ I ran the repeated-seed evaluator in GitHub Actions run 43 using 400 synthetic p
 | no_signal | 85.74% | 85.30% | 84.61% | 54.41% |
 | difficult | 85.28% | 84.83% | 84.61% | 56.82% |
 
-**My interpretation:** in this evaluation, none of the three multimodal models achieved a higher mean overall accuracy than the persistence baseline. The neural model performed substantially worse on this task in these runs. This is an important limitation, not a result I will hide or describe as a successful predictive model.
+Run 108 provides a retained benchmark record: GitHub saved both the per-run and aggregate CSVs in the [progression-scenario-results-108 artifact](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/actions/runs/43676693390). GitHub lists this artifact as expiring on 15 December 2026. The artifact belongs to a PR-branch run, so the artifact-retention workflow is not yet on main.
 
-The evaluation script also measures performance specifically on changed-stage windows and records paired patient-level bootstrap intervals for the accuracy difference from persistence. Those intervals are simulation diagnostics for this experiment; they are not clinical confidence intervals. The full per-run CSVs created by the CI job are temporary CI outputs and are not committed to this repository. You can reproduce the analysis locally using the command below.
+**My interpretation:** persistence still has the highest mean overall accuracy in all three scenarios. Neither Random Forest nor Logistic Regression nor neural fusion beats it on this measure. The neural model remains substantially worse. This is an important limitation, not evidence of a successful predictive model.
+
+The evaluator also measures performance on changed-stage windows and calculates paired patient-level bootstrap intervals for the accuracy difference from persistence. These are simulation diagnostics, not clinical confidence intervals. You can reproduce the experiment locally using the command below.
 
 Results can change with the data-generating assumptions, sample size, random seeds, dependency versions, and training settings. I do not present these synthetic results as clinical performance.
 
@@ -166,7 +168,7 @@ Run the repeated-seed evaluation across all three scenarios:
 
     python scripts/evaluate_progression_scenarios.py --patients 400 --seeds 10 --epochs 5 --bootstrap-replicates 500 --runs-output progression_scenario_runs.csv --summary-output progression_scenario_summary.csv
 
-The repeated-seed script writes one CSV with per-run results and another with aggregated scenario summaries. It compares Random Forest, Logistic Regression, and neural fusion against persistence, includes modality ablations, records changed-stage metrics, and calculates paired patient-level bootstrap intervals for accuracy differences. These CSV files are generated outputs; I do not treat them as source files, and I do not commit them unless there is a specific reason to preserve a result.
+The repeated-seed script writes one CSV with per-run results and another with aggregated scenario summaries. It compares Random Forest, Logistic Regression, and neural fusion against persistence, includes modality ablations, records accuracy, balanced accuracy, macro precision/recall/F1 and changed-stage metrics, and calculates paired patient-level bootstrap intervals for accuracy differences. The scenario summary includes means and seed-to-seed standard deviations for the aggregate classification metrics. The dashboard also provides per-class precision, recall, F1, confusion matrices, and a downloadable set of held-out examples where at least one classifier was incorrect. These CSV files are generated outputs; I do not treat them as source files, and I do not commit them unless there is a specific reason to preserve a result.
 
 ## Use a spreadsheet of my own data
 

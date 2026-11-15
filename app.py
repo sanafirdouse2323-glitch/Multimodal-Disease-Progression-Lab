@@ -607,16 +607,28 @@ with progression_tab:
     display_rows = display_rows.rename(columns={
         "model": "Method",
         "feature_group": "Data used",
-        "accuracy": "Correct predictions",
-        "macro_f1": "Balanced score",
-        "n_test_examples": "Examples checked",
+        "accuracy": "Accuracy",
+        "balanced_accuracy": "Balanced accuracy",
+        "macro_precision": "Macro precision",
+        "macro_recall": "Macro recall",
+        "macro_f1": "Macro F1",
+        "n_test_examples": "Test examples",
     })
-    display_rows["Correct predictions"] = (display_rows["Correct predictions"] * 100).round(0).astype(int).astype(str) + "%"
-    display_rows["Balanced score"] = (display_rows["Balanced score"] * 100).round(0).astype(int).astype(str) + "%"
+    percentage_columns = [
+        "Accuracy", "Balanced accuracy", "Macro precision", "Macro recall", "Macro F1"
+    ]
+    for column in percentage_columns:
+        display_rows[column] = (
+            (display_rows[column] * 100).round(1).astype(str) + "%"
+        )
     st.dataframe(display_rows, use_container_width=True, hide_index=True)
-    st.caption("Scores are shown as whole percentages, rounded to the nearest percent.")
+    st.caption(
+        "Accuracy is the fraction of correct predictions. Balanced accuracy averages recall "
+        "across classes present in the test set; macro precision, recall and F1 weight the "
+        "four defined stage labels equally. Macro F1 is not the same as balanced accuracy."
+    )
     chart_rows = fusion_rows.copy()
-    chart_rows["balanced_score_percent"] = chart_rows["macro_f1"] * 100
+    chart_rows["macro_f1_percent"] = chart_rows["macro_f1"] * 100
     if result.get("data_mode") == "simple_numbers":
         chart_rows["model"] = chart_rows["model"].replace({
             "Neural multimodal fusion": "Neural model",
@@ -627,14 +639,51 @@ with progression_tab:
     fig = px.bar(
         chart_rows,
         x="model",
-        y="balanced_score_percent",
+        y="macro_f1_percent",
         color="feature_group",
         barmode="group",
         range_y=[0, 100],
-        title="Balanced model score (higher is better)",
+        title="Macro-F1 comparison (higher is better)",
     )
-    fig.update_yaxes(title="Balanced score", ticksuffix="%")
+    fig.update_yaxes(title="Macro-F1", ticksuffix="%")
     st.plotly_chart(fig, use_container_width=True)
+
+    with st.expander("Detailed model evaluation: per-class metrics and confusion matrices"):
+        st.write(
+            "The following tables use the held-out test participants. In each confusion matrix, "
+            "rows are actual stage labels and columns are predicted stage labels."
+        )
+        if result.get("data_mode") == "synthetic":
+            st.caption("For the built-in sample, labels 0–3 are generic simulated categories, not medical stages.")
+        elif result.get("data_mode") == "simple_numbers":
+            st.caption("The simple-number example uses generic labels 0–3; they are not diagnoses or a recognised medical scale.")
+        else:
+            st.caption("For an uploaded CSV, the meaning of labels 0–3 depends on the mapping supplied with that dataset; the app does not validate their clinical meaning.")
+        for model_name, diagnostic in result["model_diagnostics"].items():
+            st.markdown(f"**{model_name}**")
+            class_rows = []
+            for stage in range(4):
+                stage_report = diagnostic["per_class"][str(stage)]
+                class_rows.append({
+                    "Stage label": stage,
+                    "Precision": stage_report["precision"],
+                    "Recall": stage_report["recall"],
+                    "F1": stage_report["f1-score"],
+                    "Support": int(stage_report["support"]),
+                })
+            class_frame = pd.DataFrame(class_rows)
+            for metric_column in ("Precision", "Recall", "F1"):
+                class_frame[metric_column] = (
+                    (class_frame[metric_column] * 100).round(1).astype(str) + "%"
+                )
+            st.dataframe(class_frame, use_container_width=True, hide_index=True)
+            confusion_frame = pd.DataFrame(
+                diagnostic["confusion_matrix"],
+                index=[f"Actual {stage}" for stage in range(4)],
+                columns=[f"Predicted {stage}" for stage in range(4)],
+            )
+            st.caption("Confusion matrix: counts of held-out examples.")
+            st.dataframe(confusion_frame, use_container_width=True)
 
     actual_stage = splits.test["target_stage"].astype(int).to_numpy()
     current_stage = splits.test["current_stage"].astype(int).to_numpy()
@@ -845,10 +894,40 @@ with data_tab:
     prediction_export["random_forest_fused_prediction"] = result["random_forest_predictions"]
     prediction_export["logistic_regression_fused_prediction"] = result["logistic_regression_predictions"]
     prediction_export["neural_fusion_prediction"] = result["neural_predictions"]
+    prediction_export["random_forest_error"] = (
+        prediction_export["random_forest_fused_prediction"] != prediction_export["target_stage"]
+    )
+    prediction_export["logistic_regression_error"] = (
+        prediction_export["logistic_regression_fused_prediction"] != prediction_export["target_stage"]
+    )
+    prediction_export["neural_fusion_error"] = (
+        prediction_export["neural_fusion_prediction"] != prediction_export["target_stage"]
+    )
     st.download_button(
         "Download held-out predictions (CSV)",
         data=prediction_export.to_csv(index=False).encode("utf-8"),
         file_name="held_out_predictions.csv",
+        mime="text/csv",
+    )
+    st.subheader("Held-out prediction error analysis")
+    st.caption(
+        "These are test examples on which at least one classifier predicted a different stage "
+        "from the held-out target. The table supports inspection of model errors; it is not a "
+        "clinical error review."
+    )
+    error_rows = prediction_export.loc[
+        prediction_export[[
+            "random_forest_error", "logistic_regression_error", "neural_fusion_error"
+        ]].any(axis=1)
+    ]
+    if error_rows.empty:
+        st.info("No classification errors were found for these test examples.")
+    else:
+        st.dataframe(error_rows.head(50), use_container_width=True, hide_index=True)
+    st.download_button(
+        "Download held-out error examples (CSV)",
+        data=error_rows.to_csv(index=False).encode("utf-8"),
+        file_name="held_out_error_analysis.csv",
         mime="text/csv",
     )
     st.download_button(
@@ -861,10 +940,21 @@ with data_tab:
             "neural_metrics": {
                 "n_test_examples": result["neural_metrics"]["n_test_examples"],
                 "accuracy": result["neural_metrics"]["accuracy"],
+                "balanced_accuracy": result["neural_metrics"]["balanced_accuracy"],
+                "macro_precision": result["neural_metrics"]["macro_precision"],
+                "macro_recall": result["neural_metrics"]["macro_recall"],
                 "macro_f1": result["neural_metrics"]["macro_f1"],
+                "confusion_matrix": result["neural_metrics"]["confusion_matrix"],
+                "per_class": result["neural_metrics"]["per_class"],
             },
+            "model_diagnostics": result["model_diagnostics"],
             "causal_simulation": result["causal"],
             "data_mode": result.get("data_mode", "synthetic"),
+            "model_evaluation_note": (
+                "Per-class metrics and confusion matrices are calculated on the held-out test split. "
+                "Balanced accuracy averages recall across classes represented in the test data. "
+                "Macro averages include the four defined stage labels."
+            ),
             "disclaimer": (
                 "Progression results use artificial sample data; not medical evidence."
                 if result.get("data_mode") == "synthetic"

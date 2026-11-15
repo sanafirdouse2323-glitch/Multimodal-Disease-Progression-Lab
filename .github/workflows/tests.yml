@@ -11,8 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7.1.0
         with:
           python-version: "3.12"
           cache: pip
@@ -21,3 +21,12 @@ jobs:
       - run: PYTHONPATH=src python -m pytest -q
       - run: python scripts/run_experiment.py --patients 120 --epochs 3 --seed 42 --scenario progression_signal --output /tmp/smoke-summary.json
       - run: python scripts/evaluate_progression_scenarios.py --patients 400 --seeds 10 --epochs 5 --bootstrap-replicates 500 --runs-output /tmp/scenario-runs.csv --summary-output /tmp/scenario-summary.csv
+      - name: Upload repeated-seed scenario results
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: progression-scenario-results-${{ github.run_number }}
+          path: |
+            /tmp/scenario-runs.csv
+            /tmp/scenario-summary.csv
+          if-no-files-found: error
+          retention-days: 30

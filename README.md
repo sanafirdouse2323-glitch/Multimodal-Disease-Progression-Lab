@@ -95,7 +95,7 @@ I also report exact next-stage accuracy on test windows where the stage actually
 
 ## Recorded repeated-seed synthetic benchmark
 
-The table below reports mean **overall accuracy** from successful PR-branch GitHub Actions run 100 on 15 November 2026. It used 400 synthetic participants per run, 10 seeds per scenario, 5 neural training epochs, and 500 patient-bootstrap replicates. The means match the earlier recorded runs 43 and 97:
+The table below reports mean **overall accuracy** from successful PR-branch GitHub Actions run 105 on 15 November 2026. It used 400 synthetic participants per run, 10 seeds per scenario, 5 neural training epochs, and 500 patient-bootstrap replicates. The means match the earlier recorded runs 43, 97, and 100:
 
 | Scenario | Persistence | Random Forest (multimodal) | Logistic Regression (multimodal) | Neural multimodal fusion |
 |---|---:|---:|---:|---:|
@@ -103,7 +103,7 @@ The table below reports mean **overall accuracy** from successful PR-branch GitH
 | no_signal | 85.74% | 85.30% | 84.61% | 54.41% |
 | difficult | 85.28% | 84.83% | 84.61% | 56.82% |
 
-Run 100 provides the retained benchmark record: GitHub saved both the per-run and aggregate CSVs in the [progression-scenario-results-100 artifact](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/actions/runs/43674712438). GitHub lists this artifact as expiring on 15 December 2026. The artifact belongs to a PR-branch run, so the artifact-retention workflow is not yet on main.
+Run 105 provides the latest retained benchmark record: GitHub saved both the per-run and aggregate CSVs in the [progression-scenario-results-105 artifact](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/actions/runs/43675586335). GitHub lists this artifact as expiring on 15 December 2026. The artifact belongs to a PR-branch run, so the artifact-retention workflow is not yet on main.
 
 **My interpretation:** persistence still has the highest mean overall accuracy in all three scenarios. Neither Random Forest nor Logistic Regression nor neural fusion beats it on this measure. The neural model remains substantially worse. This is an important limitation, not evidence of a successful predictive model.
 

@@ -41,7 +41,7 @@ The requirements file uses CPU-only PyTorch. I do not require a CUDA-capable GPU
 
     streamlit run app.py
 
-I open the local URL printed in the terminal. The default data source is the synthetic demo, so I can test the workflow without uploading a CSV.
+I open the local URL printed in the terminal. The page starts with **Enter simple numbers** and a pre-filled 30-row example. To test the feature-level multimodal pipeline, I select **Synthetic demo**; that mode starts with 400 generated participants.
 
 ## 5. Run the automated checks
 
@@ -54,20 +54,7 @@ macOS or Linux:
 
     PYTHONPATH=src python -m pytest -q
 
-Then I run a small end-to-end synthetic experiment:
-
-    python scripts/run_experiment.py --patients 120 --epochs 3 --seed 42 --scenario progression_signal --output smoke-summary.json
-
-I can also check the other data-generator scenarios:
-
-    python scripts/run_experiment.py --patients 120 --epochs 3 --seed 42 --scenario no_signal
-    python scripts/run_experiment.py --patients 120 --epochs 3 --seed 42 --scenario difficult
-
-For a more thorough model comparison, I run:
-
-    python scripts/evaluate_progression_scenarios.py --patients 400 --seeds 10 --epochs 5 --bootstrap-replicates 500 --runs-output progression_scenario_runs.csv --summary-output progression_scenario_summary.csv
-
-The repeated-seed evaluation produces two CSV files. They are generated results, not source code. I inspect them before making any performance statement and do not commit them unless I intend to preserve a particular experiment output.
+For the full three-scenario repeated-seed evaluation, use the command in the README's **Run the tests and experiments** section. GitHub Actions runs the test suite, a smoke experiment, and this repeated-seed comparison on pull requests targeting main and on pushes to main. The workflow proposed in PR #10 also saves the per-run and summary CSVs as a downloadable artifact.
 
 ## 6. Make a change safely
 

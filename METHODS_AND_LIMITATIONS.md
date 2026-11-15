@@ -22,7 +22,7 @@ For participant i, let the visits be ordered by their observed time. For a visit
 
 The target is one of four generic integer labels: 0, 1, 2, or 3. The code does not attach a clinical definition to those labels. A data owner must define and document any mapping before using a supplied dataset.
 
-Because visit gaps are not fixed, the task is not a fixed-horizon forecast. It predicts the next recorded label, even if different examples have different time intervals.
+Because visit gaps are not fixed, the task is not a fixed-horizon forecast. It predicts the next recorded label, even if different examples have different time intervals. The next-visit interval is recorded for interpretation and export, but it is not a model input. The feature visit_gap_scaled represents the interval since the previous observed visit.
 
 ## 3. Synthetic data design
 
@@ -51,15 +51,17 @@ The current feature table contains:
 - Clinical and visit information: scaled age, a numeric group code, two generic lab fields, scaled current stage, and scaled visit gap.
 - Two indicators showing whether the imaging and wearable groups are missing.
 
-For classical models, the code compares four feature groups: imaging, wearables, clinical plus temporal/current-stage information, and all features combined. Random Forest uses median imputation. Logistic Regression uses median imputation followed by standardisation.
+For classical models, the code compares four feature groups: imaging, wearables, clinical plus temporal/current-stage information, and all features combined. Random Forest uses median imputation. Logistic Regression uses median imputation followed by standardisation. These preprocessing steps are fitted within each model's training pipeline.
 
-The neural fusion model has separate small multilayer-perceptron encoders for imaging, wearable, and clinical/missingness inputs. It concatenates the three encoded representations and passes them through a fusion layer and a four-class output layer. The neural model uses median imputation and standardisation fitted from the training partition only. It selects the saved checkpoint using validation macro-F1.
+The Random Forest uses 180 trees, a minimum leaf size of 2, and balanced-subsample class weights. Logistic Regression uses balanced class weights and a maximum of 1,200 iterations. The neural fusion model has separate small multilayer-perceptron encoders for imaging, wearable, and clinical/missingness inputs. It concatenates the three encoded representations and passes them through a fusion layer and a four-class output layer. Neural preprocessing is fitted on training data only. The network uses Adam with a learning rate of 0.001, weight decay of 0.0001, batches of 64, and ordinary unweighted cross-entropy loss. It selects the saved checkpoint using validation macro-F1.
+
+The three model types therefore do not use identical class-weighting strategies: both classical classifiers apply class weighting, while the neural model does not. Their scores compare the implemented pipelines; they should not be interpreted as a controlled comparison of architecture alone.
 
 These are compact demonstration models. I do not describe them as a state-of-the-art architecture or as a clinically optimised system.
 
 ## 5. Data splitting and leakage controls
 
-I create forecast examples from each participant's consecutive visits. I then split unique participant IDs into training, validation, and test groups in a 60/20/20 proportion. All visits from one participant remain within one partition.
+I create forecast examples from each participant's consecutive visits. I then make a seeded random split of unique participant IDs into training, validation, and test groups in a 60/20/20 proportion. The split is not stratified by target class. All visits from one participant remain within one partition. The code checks that the training partition contains at least two target classes, but it does not guarantee that all four classes appear in validation or test. Class support can therefore vary, especially in small or imbalanced datasets.
 
 For the neural model, the imputation medians, means, and scales are computed on training features and then applied to validation and test features. The validation partition is used for neural checkpoint selection. The test partition is held for final evaluation.
 
@@ -100,9 +102,9 @@ The repeated-seed script additionally reports:
 
 The bootstrap resamples test participants and retains all test windows belonging to each sampled participant. The same sampled participants are used for the model and persistence predictions, making the comparison paired. These are simulation diagnostics for the generated experiment. They are not clinical confidence intervals and should not be used as such.
 
-## 8. Current repeated-seed results
+## 8. Recorded repeated-seed results
 
-In GitHub Actions run 43, the evaluator used 400 synthetic participants per run, 10 seeds per scenario, 5 neural epochs, and 500 patient-bootstrap replicates. The reported mean overall accuracies for the multimodal models were:
+The table below records the mean overall accuracy from GitHub Actions run 43 on 29 October 2026. That run used 400 synthetic participants per run, 10 seeds per scenario, 5 neural epochs, and 500 patient-bootstrap replicates. These are the values recorded in the project documentation; the run's generated CSVs were not saved as workflow artifacts, so the exact per-run results cannot now be independently recalculated from that run.
 
 | Scenario | Persistence | Random Forest | Logistic Regression | Neural fusion |
 |---|---:|---:|---:|---:|
@@ -112,7 +114,7 @@ In GitHub Actions run 43, the evaluator used 400 synthetic participants per run,
 
 In this run, the multimodal models did not beat persistence on mean overall accuracy in any scenario. The results show that planting a relationship in the data generator does not automatically mean that the current modelling pipeline learns a useful next-stage classifier. This remains an implementation and modelling problem to investigate.
 
-The values above are a recorded CI evaluation, not guaranteed results for every local environment. The evaluator's per-run CSVs in CI were written to temporary paths and are not stored in the repository. Running the script locally creates the per-run and summary CSVs in the paths selected by its command-line options.
+The values above are a dated synthetic result, not a clinical estimate and not a guarantee for other environments. Later workflow runs 85, 86, and 88 passed their configured tests and repeated-seed commands, but no result artifacts were retained from those runs. The workflow change proposed in PR #10 uploads the per-run and summary CSVs for future executions. Running the script locally also creates both CSVs at the paths selected by its command-line options.
 
 ## 9. Missing-modality experiment
 

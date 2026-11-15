@@ -48,7 +48,7 @@ The current feature table contains:
 
 - Eight imaging-related numerical columns: img_0 through img_7.
 - Six wearable-style numerical columns: wear_0 through wear_5.
-- Clinical and visit information: scaled age, a numeric group code, two generic lab fields, scaled current stage, and scaled visit gap.
+- Clinical and visit information: scaled age, `sex_binary`, two generic lab fields, scaled current stage, and scaled visit gap. The supplied `sex_binary` values are model inputs and are also used to form separate descriptive test subgroups; they are not merely reporting labels.
 - Two indicators showing whether the imaging and wearable groups are missing.
 
 For classical models, the code compares four feature groups: imaging, wearables, clinical plus temporal/current-stage information, and all features combined. Random Forest uses median imputation. Logistic Regression uses median imputation followed by standardisation. These preprocessing steps are fitted within each model's training pipeline.
@@ -134,7 +134,7 @@ This exercise is kept separate from the progression cohort. Even when a user upl
 
 ## 11. Descriptive subgroup summaries
 
-The app reports descriptive metrics for numeric group codes 0 and 1 and for age groups split at the median age among training prediction windows, when those values are available. Because age is repeated across a participant's windows, a participant with more windows contributes more weight to this median. The reported subgroup metrics and counts are calculated over test prediction windows, not aggregated once per participant. The software does not infer what the numeric group codes represent. Missing values can leave a group empty.
+The app reports descriptive metrics for numeric group codes 0 and 1 and for age groups split at the median age among training prediction windows, when those values are available. Because age is repeated across a participant's windows, a participant with more windows contributes more weight to this median. The reported subgroup metrics and counts are calculated over test prediction windows, not aggregated once per participant. The software does not infer what the numeric group codes represent. The `sex_binary` values are also predictors in the classification models, so supplied values can influence predictions; subgroup reporting is not the only use of this field. Missing values can leave a group empty.
 
 These summaries are not a fairness audit. A proper fairness assessment would require a clearly justified subgroup definition, suitable sample sizes, uncertainty estimates, clinically relevant metrics, analysis of measurement and label quality, and external validation.
 

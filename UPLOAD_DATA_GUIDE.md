@@ -42,12 +42,12 @@ Use one row per participant visit. Keep the same non-identifying `patient_id` fo
 | Column | Accepted values |
 |---|---|
 | `age_years` | Blank or a number from 0 to 120. |
-| `sex_binary` | Blank, 0, or 1. Document what the codes mean in your own data records; the app does not infer their meaning. |
+| `sex_binary` | Blank, 0, or 1. **This is a model input as well as a subgrouping field**: its supplied values can influence predictions and are also used for separate 0/1 test-group summaries. Document what the codes mean; the app does not infer their meaning. |
 | `lab_a`, `lab_b` | Blank or numeric values. Units and meanings are not defined by the app. |
 | `img_0` to `img_7` | Blank or pre-computed numerical imaging-related features. |
 | `wear_0` to `wear_5` | Blank or pre-computed numerical wearable-related features. |
 
-The image and wearable columns are feature values, not image files, pixel data, or raw sensor recordings. The app does not extract features from raw medical images or process raw wearable streams. Optional columns may be omitted; extra columns are ignored and reported in an upload warning.
+The optional numerical columns become model inputs when values are supplied. In particular, `sex_binary` can influence model predictions; it is not used only for subgroup reporting. It is also used to produce separate descriptive results for codes 0 and 1. The app does not infer the meaning of those codes, so document the coding and use this field only when its inclusion is justified and authorised. The image and wearable columns are feature values, not image files, pixel data, or raw sensor recordings. The app does not extract features from raw medical images or process raw wearable streams. Optional columns may be omitted; extra columns are ignored and reported in an upload warning.
 
 ## Validation rules
 

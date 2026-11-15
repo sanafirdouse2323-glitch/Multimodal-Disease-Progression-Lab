@@ -124,3 +124,17 @@ def test_guides_explain_follow_up_interval_and_window_weighted_subgroups():
     assert "median age among training prediction windows" in guide
     assert "not aggregated once per participant" in methods
     assert "intersectional groups are not calculated" in guide
+
+
+def test_sex_binary_upload_field_is_documented_as_both_predictor_and_subgroup():
+    guide = (ROOT / "DATA_AND_RESULTS_GUIDE.md").read_text(encoding="utf-8")
+    upload = (ROOT / "UPLOAD_DATA_GUIDE.md").read_text(encoding="utf-8")
+    methods = (ROOT / "METHODS_AND_LIMITATIONS.md").read_text(encoding="utf-8")
+    data_source = (ROOT / "src" / "medprogress" / "data.py").read_text(encoding="utf-8")
+
+    assert '"sex_binary",' in data_source
+    assert "Included as a clinical model input" in guide
+    assert "not merely a reporting label" in guide
+    assert "model input as well as a subgrouping field" in upload
+    assert "can influence model predictions" in upload
+    assert "`sex_binary`" in methods

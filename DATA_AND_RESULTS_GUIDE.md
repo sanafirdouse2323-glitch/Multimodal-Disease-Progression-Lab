@@ -135,7 +135,7 @@ The software creates prediction examples first and then splits unique participan
 | Validation | 20% | Selects the neural model checkpoint using macro-F1. |
 | Test | 20% | Provides the held-out results displayed after the experiment. |
 
-All visits and prediction examples from one participant remain in the same partition. This reduces leakage that could occur if visits from the same person appeared in both training and test data.
+All visits and prediction examples from one participant remain in the same partition. The seeded split is not stratified by stage label, so some stage codes may be absent from validation or test, particularly in small or imbalanced datasets. This reduces leakage that could occur if visits from the same person appeared in both training and test data.
 
 For the neural model, missing-value medians and standardisation values are calculated on the training partition and then applied to validation and test data. The test labels are not used to train the model or select its neural checkpoint.
 

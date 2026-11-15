@@ -93,9 +93,9 @@ I report accuracy, balanced accuracy, macro precision, macro recall, and macro-F
 
 I also report exact next-stage accuracy on test windows where the stage actually changed, together with precision, recall, and F1 for detecting whether any stage change occurred. I added these measures because an overall score can look high when most next-visit labels stay unchanged.
 
-## Latest repeated-seed synthetic evaluation
+## Recorded repeated-seed synthetic benchmark
 
-The table below reports the mean **overall accuracy** from successful PR-branch GitHub Actions run 97 on 15 November 2026. It used 400 synthetic participants per run, 10 seeds per scenario, 5 neural training epochs, and 500 patient-bootstrap replicates:
+The table below reports mean **overall accuracy** from successful PR-branch GitHub Actions run 100 on 15 November 2026. It used 400 synthetic participants per run, 10 seeds per scenario, 5 neural training epochs, and 500 patient-bootstrap replicates. The means match the earlier recorded runs 43 and 97:
 
 | Scenario | Persistence | Random Forest (multimodal) | Logistic Regression (multimodal) | Neural multimodal fusion |
 |---|---:|---:|---:|---:|
@@ -103,7 +103,7 @@ The table below reports the mean **overall accuracy** from successful PR-branch 
 | no_signal | 85.74% | 85.30% | 84.61% | 54.41% |
 | difficult | 85.28% | 84.83% | 84.61% | 56.82% |
 
-The two-decimal results reproduce the values documented from the earlier run 43. Run 97 provides the newer retained record: GitHub saved both the per-run and aggregate CSVs in the [progression-scenario-results-97 artifact](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/actions/runs/43673970977). Successful PR #10 runs 89–95 and 97 also have retained evaluation artifacts; run 96 failed a documentation assertion and did not produce an artifact. GitHub lists the run 97 artifact as expiring on 15 December 2026. These are PR-branch runs, so the artifact-retention workflow is not yet on main.
+Run 100 provides the retained benchmark record: GitHub saved both the per-run and aggregate CSVs in the [progression-scenario-results-100 artifact](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/actions/runs/43674712438). GitHub lists this artifact as expiring on 15 December 2026. The artifact belongs to a PR-branch run, so the artifact-retention workflow is not yet on main.
 
 **My interpretation:** persistence still has the highest mean overall accuracy in all three scenarios. Neither Random Forest nor Logistic Regression nor neural fusion beats it on this measure. The neural model remains substantially worse. This is an important limitation, not evidence of a successful predictive model.
 

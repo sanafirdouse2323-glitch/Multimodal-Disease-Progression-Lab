@@ -102,9 +102,9 @@ The repeated-seed script additionally reports:
 
 The bootstrap resamples test participants and retains all test windows belonging to each sampled participant. The same sampled participants are used for the model and persistence predictions, making the comparison paired. These are simulation diagnostics for the generated experiment. They are not clinical confidence intervals and should not be used as such.
 
-## 8. Latest repeated-seed results
+## 8. Recorded repeated-seed results
 
-The table below reports mean overall accuracy from successful PR-branch GitHub Actions run 97 on 15 November 2026. It used 400 synthetic participants per run, 10 seeds per scenario, 5 neural epochs, and 500 patient-bootstrap replicates. The two-decimal means reproduce the values documented from the earlier run 43.
+The table below reports mean overall accuracy from successful PR-branch GitHub Actions run 100 on 15 November 2026. It used 400 synthetic participants per run, 10 seeds per scenario, 5 neural epochs, and 500 patient-bootstrap replicates. The means match the earlier recorded runs 43 and 97.
 
 | Scenario | Persistence | Random Forest | Logistic Regression | Neural fusion |
 |---|---:|---:|---:|---:|
@@ -114,7 +114,7 @@ The table below reports mean overall accuracy from successful PR-branch GitHub A
 
 Persistence has the highest mean overall accuracy in all three scenarios. None of the multimodal models beats it on this measure. The neural model remains substantially worse. Planting a relationship in the data generator does not automatically mean that the current modelling pipeline learns a useful next-stage classifier. This remains an implementation and modelling problem to investigate.
 
-Run 97's per-run and aggregate CSVs are retained in the [progression-scenario-results-97 artifact](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/actions/runs/43673970977). Successful PR #10 runs 89–95 and 97 also have retained artifacts; run 96 failed a documentation assertion and produced no artifact. GitHub lists the run 97 artifact as expiring on 15 December 2026. These are synthetic diagnostics, not clinical performance estimates or guarantees for other environments. The artifacts belong to PR-branch runs; the workflow change remains on the PR branch, not main. Running the script locally also creates both CSVs at the paths selected by its command-line options.
+Run 100's per-run and aggregate CSVs are retained in the [progression-scenario-results-100 artifact](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/actions/runs/43674712438). GitHub lists this artifact as expiring on 15 December 2026. These are synthetic diagnostics, not clinical performance estimates or guarantees for other environments. The artifact belongs to a PR-branch run; the workflow change remains on the PR branch, not main. Running the script locally also creates both CSVs at the paths selected by its command-line options.
 
 ## 9. Missing-modality experiment
 

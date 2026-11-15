@@ -9,7 +9,7 @@ I built this project as an educational machine-learning and research-methods pro
 
 The dashboard introduces the examples in two steps. Visitors are invited to begin with **Enter simple numbers**, which opens a pre-filled table of 30 artificial examples and runs with one click. They can then select **Synthetic demo** to explore generated imaging-related, wearable-style, and clinical/temporal features. **Upload CSV** remains available for visitors who already have a prepared dataset. The data-source choices, template download, and experiment settings are grouped in the centre of the page.
 
-The default experience uses entirely synthetic data. I do not claim that the synthetic data represent a real disease, that the generated relationships are medically established, or that the models are ready for clinical use.
+The pre-filled simple-number example and built-in Synthetic demo use artificial data. If you upload a CSV, the progression analysis uses the numerical values you provide. The separate treatment-effect exercise always uses its own synthetic data. None of these examples establishes a real disease mechanism or clinical performance.
 
 > **Important:** This is a research and learning prototype, not a diagnostic, prognostic, or treatment tool. The hosted website is public and receives uploaded files. Do not upload identifiable, confidential, or unauthorised health information. The app does not accept raw MRI, X-ray, image, or wearable sensor files.
 
@@ -93,9 +93,9 @@ I report accuracy, balanced accuracy, macro precision, macro recall, and macro-F
 
 I also report exact next-stage accuracy on test windows where the stage actually changed, together with precision, recall, and F1 for detecting whether any stage change occurred. I added these measures because an overall score can look high when most next-visit labels stay unchanged.
 
-## What the current synthetic evaluation shows
+## Recorded synthetic evaluation
 
-I ran the repeated-seed evaluator in GitHub Actions run 43 using 400 synthetic participants per run, 10 seeds per scenario, 5 neural training epochs, and 500 patient-bootstrap replicates for each model/run comparison. The following are the mean **overall accuracy** values reported by that run:
+The table below reports the mean **overall accuracy** recorded in GitHub Actions run 43 on 29 October 2026. That run used 400 synthetic participants per run, 10 seeds per scenario, 5 neural training epochs, and 500 patient-bootstrap replicates for each model/run comparison:
 
 | Scenario | Persistence | Random Forest (multimodal) | Logistic Regression (multimodal) | Neural multimodal fusion |
 |---|---:|---:|---:|---:|
@@ -105,7 +105,7 @@ I ran the repeated-seed evaluator in GitHub Actions run 43 using 400 synthetic p
 
 **My interpretation:** in this evaluation, none of the three multimodal models achieved a higher mean overall accuracy than the persistence baseline. The neural model performed substantially worse on this task in these runs. This is an important limitation, not a result I will hide or describe as a successful predictive model.
 
-The evaluation script also measures performance specifically on changed-stage windows and records paired patient-level bootstrap intervals for the accuracy difference from persistence. Those intervals are simulation diagnostics for this experiment; they are not clinical confidence intervals. The full per-run CSVs created by the CI job are temporary CI outputs and are not committed to this repository. You can reproduce the analysis locally using the command below.
+The evaluator also measures performance on changed-stage windows and records paired patient-level bootstrap intervals for the accuracy difference from persistence. These intervals are simulation diagnostics, not clinical confidence intervals. The CSVs from run 43 were written to temporary paths and were not retained as artifacts. Later workflow runs 85, 86, and 88 also passed their configured tests and repeated-seed command, but retained no result files, so they do not provide a newer score table. The workflow change in PR #10 adds a 30-day artifact upload for the per-run and summary CSVs from future executions. You can also reproduce the analysis locally using the command below.
 
 Results can change with the data-generating assumptions, sample size, random seeds, dependency versions, and training settings. I do not present these synthetic results as clinical performance.
 

@@ -102,9 +102,9 @@ The repeated-seed script additionally reports:
 
 The bootstrap resamples test participants and retains all test windows belonging to each sampled participant. The same sampled participants are used for the model and persistence predictions, making the comparison paired. These are simulation diagnostics for the generated experiment. They are not clinical confidence intervals and should not be used as such.
 
-## 8. Recorded repeated-seed results
+## 8. Latest repeated-seed results
 
-The table below records the mean overall accuracy from GitHub Actions run 43 on 29 October 2026. That run used 400 synthetic participants per run, 10 seeds per scenario, 5 neural epochs, and 500 patient-bootstrap replicates. These are the values recorded in the project documentation; the run's generated CSVs were not saved as workflow artifacts, so the exact per-run results cannot now be independently recalculated from that run.
+The table below reports mean overall accuracy from successful PR-branch GitHub Actions run 97 on 15 November 2026. It used 400 synthetic participants per run, 10 seeds per scenario, 5 neural epochs, and 500 patient-bootstrap replicates. The two-decimal means reproduce the values documented from the earlier run 43.
 
 | Scenario | Persistence | Random Forest | Logistic Regression | Neural fusion |
 |---|---:|---:|---:|---:|
@@ -112,9 +112,9 @@ The table below records the mean overall accuracy from GitHub Actions run 43 on 
 | no_signal | 85.74% | 85.30% | 84.61% | 54.41% |
 | difficult | 85.28% | 84.83% | 84.61% | 56.82% |
 
-In this run, the multimodal models did not beat persistence on mean overall accuracy in any scenario. The results show that planting a relationship in the data generator does not automatically mean that the current modelling pipeline learns a useful next-stage classifier. This remains an implementation and modelling problem to investigate.
+Persistence has the highest mean overall accuracy in all three scenarios. None of the multimodal models beats it on this measure. The neural model remains substantially worse. Planting a relationship in the data generator does not automatically mean that the current modelling pipeline learns a useful next-stage classifier. This remains an implementation and modelling problem to investigate.
 
-The values above are a dated synthetic result, not a clinical estimate and not a guarantee for other environments. Later workflow runs 85, 86, and 88 passed their configured tests and repeated-seed commands, but no result artifacts were retained from those runs. The updated PR #10 workflow has saved per-run and summary CSVs for successful runs 89–93. The latest is the [progression-scenario-results-93 artifact](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/actions/runs/43664302014), which GitHub lists as expiring on 15 December 2026. These artifacts belong to PR-branch runs; the workflow change remains on the PR branch, not main. Running the script locally also creates both CSVs at the paths selected by its command-line options.
+Run 97's per-run and aggregate CSVs are retained in the [progression-scenario-results-97 artifact](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/actions/runs/43673970977). Successful PR #10 runs 89–95 and 97 also have retained artifacts; run 96 failed a documentation assertion and produced no artifact. GitHub lists the run 97 artifact as expiring on 15 December 2026. These are synthetic diagnostics, not clinical performance estimates or guarantees for other environments. The artifacts belong to PR-branch runs; the workflow change remains on the PR branch, not main. Running the script locally also creates both CSVs at the paths selected by its command-line options.
 
 ## 9. Missing-modality experiment
 

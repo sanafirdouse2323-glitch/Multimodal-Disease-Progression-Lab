@@ -93,9 +93,9 @@ I report accuracy, balanced accuracy, macro precision, macro recall, and macro-F
 
 I also report exact next-stage accuracy on test windows where the stage actually changed, together with precision, recall, and F1 for detecting whether any stage change occurred. I added these measures because an overall score can look high when most next-visit labels stay unchanged.
 
-## Recorded synthetic evaluation
+## Latest repeated-seed synthetic evaluation
 
-The table below reports the mean **overall accuracy** recorded in GitHub Actions run 43 on 29 October 2026. That run used 400 synthetic participants per run, 10 seeds per scenario, 5 neural training epochs, and 500 patient-bootstrap replicates for each model/run comparison:
+The table below reports the mean **overall accuracy** from successful PR-branch GitHub Actions run 97 on 15 November 2026. It used 400 synthetic participants per run, 10 seeds per scenario, 5 neural training epochs, and 500 patient-bootstrap replicates:
 
 | Scenario | Persistence | Random Forest (multimodal) | Logistic Regression (multimodal) | Neural multimodal fusion |
 |---|---:|---:|---:|---:|
@@ -103,9 +103,11 @@ The table below reports the mean **overall accuracy** recorded in GitHub Actions
 | no_signal | 85.74% | 85.30% | 84.61% | 54.41% |
 | difficult | 85.28% | 84.83% | 84.61% | 56.82% |
 
-**My interpretation:** in this evaluation, none of the three multimodal models achieved a higher mean overall accuracy than the persistence baseline. The neural model performed substantially worse on this task in these runs. This is an important limitation, not a result I will hide or describe as a successful predictive model.
+The two-decimal results reproduce the values documented from the earlier run 43. Run 97 provides the newer retained record: GitHub saved both the per-run and aggregate CSVs in the [progression-scenario-results-97 artifact](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/actions/runs/43673970977). Successful PR #10 runs 89–95 and 97 also have retained evaluation artifacts; run 96 failed a documentation assertion and did not produce an artifact. GitHub lists the run 97 artifact as expiring on 15 December 2026. These are PR-branch runs, so the artifact-retention workflow is not yet on main.
 
-The evaluator also measures performance on changed-stage windows and records paired patient-level bootstrap intervals for the accuracy difference from persistence. These intervals are simulation diagnostics, not clinical confidence intervals. The CSVs from run 43 were written to temporary paths and were not retained as artifacts. Later workflow runs 85, 86, and 88 also passed their configured tests and repeated-seed command, but retained no result files, so they do not provide a newer score table. The updated workflow has retained per-run and summary CSVs for successful PR #10 runs 89–93. The latest is [progression-scenario-results-93](https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab/actions/runs/43664302014), which GitHub lists as expiring on 15 December 2026. These artifacts are attached to PR-branch runs; the retention change is not yet on main. You can also reproduce the analysis locally using the command below.
+**My interpretation:** persistence still has the highest mean overall accuracy in all three scenarios. Neither Random Forest nor Logistic Regression nor neural fusion beats it on this measure. The neural model remains substantially worse. This is an important limitation, not evidence of a successful predictive model.
+
+The evaluator also measures performance on changed-stage windows and calculates paired patient-level bootstrap intervals for the accuracy difference from persistence. These are simulation diagnostics, not clinical confidence intervals. You can reproduce the experiment locally using the command below.
 
 Results can change with the data-generating assumptions, sample size, random seeds, dependency versions, and training settings. I do not present these synthetic results as clinical performance.
 

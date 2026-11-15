@@ -68,12 +68,29 @@ class Preprocessor:
 
 def classification_metrics(y_true, y_pred) -> dict[str, Any]:
     """Return aggregate, class-level, and confusion-matrix metrics for fixed stage labels."""
-    y_true = np.asarray(y_true, dtype=int)
-    y_pred = np.asarray(y_pred, dtype=int)
-    if y_true.ndim != 1 or y_pred.ndim != 1 or len(y_true) != len(y_pred):
+    raw_true = np.asarray(y_true)
+    raw_pred = np.asarray(y_pred)
+    if raw_true.ndim != 1 or raw_pred.ndim != 1 or len(raw_true) != len(raw_pred):
         raise ValueError("True labels and predictions must be one-dimensional arrays of equal length")
-    if len(y_true) == 0:
+    if len(raw_true) == 0:
         raise ValueError("At least one test example is required for classification metrics")
+
+    try:
+        numeric_true = raw_true.astype(np.float64)
+        numeric_pred = raw_pred.astype(np.float64)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("True labels and predictions must contain finite integer stage codes") from exc
+
+    if (
+        not np.isfinite(numeric_true).all()
+        or not np.isfinite(numeric_pred).all()
+        or not np.equal(numeric_true, np.floor(numeric_true)).all()
+        or not np.equal(numeric_pred, np.floor(numeric_pred)).all()
+    ):
+        raise ValueError("True labels and predictions must contain finite integer stage codes")
+
+    y_true = numeric_true.astype(np.int64)
+    y_pred = numeric_pred.astype(np.int64)
     if not np.isin(y_true, STAGE_LABELS).all() or not np.isin(y_pred, STAGE_LABELS).all():
         raise ValueError(f"Stage labels and predictions must be in {STAGE_LABELS}")
 
@@ -91,7 +108,6 @@ def classification_metrics(y_true, y_pred) -> dict[str, Any]:
         "confusion_matrix": matrix.astype(int).tolist(),
         "per_class": report,
     }
-
 
 def build_classical_model(kind: str, seed: int = 42) -> Pipeline:
     if kind == "random_forest":

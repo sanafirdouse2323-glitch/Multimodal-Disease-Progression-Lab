@@ -138,3 +138,13 @@ def test_sex_binary_upload_field_is_documented_as_both_predictor_and_subgroup():
     assert "model input as well as a subgrouping field" in upload
     assert "can influence model predictions" in upload
     assert "`sex_binary`" in methods
+
+
+def test_upload_documentation_states_sex_code_consistency_rule():
+    guide = (ROOT / "UPLOAD_DATA_GUIDE.md").read_text(encoding="utf-8")
+    data_guide = (ROOT / "DATA_AND_RESULTS_GUIDE.md").read_text(encoding="utf-8")
+    data_source = (ROOT / "src" / "medprogress" / "data.py").read_text(encoding="utf-8")
+
+    assert "consistent across visits for the same participant" in guide
+    assert "consistent across one participant's visits" in data_guide
+    assert "patients_with_conflicting_sex_codes" in data_source

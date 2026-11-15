@@ -42,7 +42,7 @@ Use one row per participant visit. Keep the same non-identifying `patient_id` fo
 | Column | Accepted values |
 |---|---|
 | `age_years` | Blank or a number from 0 to 120. |
-| `sex_binary` | Blank, 0, or 1. **This is a model input as well as a subgrouping field**: its supplied values can influence predictions and are also used for separate 0/1 test-group summaries. Document what the codes mean; the app does not infer their meaning. |
+| `sex_binary` | Blank, 0, or 1. **This is a model input as well as a subgrouping field**: its supplied values can influence predictions and are also used for separate 0/1 test-group summaries. Nonblank values must remain consistent across visits for the same participant. Document what the codes mean; the app does not infer their meaning. |
 | `lab_a`, `lab_b` | Blank or numeric values. Units and meanings are not defined by the app. |
 | `img_0` to `img_7` | Blank or pre-computed numerical imaging-related features. |
 | `wear_0` to `wear_5` | Blank or pre-computed numerical wearable-related features. |
@@ -59,6 +59,7 @@ For a detailed CSV, the app checks that:
 - Visit times are non-negative.
 - Stage codes are whole numbers from 0 to 3.
 - Nonblank ages are between 0 and 120, and nonblank `sex_binary` values are 0 or 1.
+- Nonblank `sex_binary` values do not conflict across visits belonging to the same participant. Blank values are allowed.
 - There are at least 10 unique participants.
 - Every participant has at least two visits.
 - A participant has no duplicate visit times.

@@ -48,7 +48,7 @@ The current feature table contains:
 
 - Eight imaging-related numerical columns: img_0 through img_7.
 - Six wearable-style numerical columns: wear_0 through wear_5.
-- Clinical and visit information: scaled age, `sex_binary`, two generic lab fields, scaled current stage, and scaled visit gap. The supplied `sex_binary` values are model inputs and are also used to form separate descriptive test subgroups; they are not merely reporting labels.
+- Clinical and visit information: scaled age, `sex_binary`, two generic lab fields, scaled current stage, and scaled visit gap. The supplied `sex_binary` values are model inputs and are also used to form separate descriptive test subgroups; they are not merely reporting labels. For uploads, the validator requires nonblank codes to remain consistent across visits for the same participant.
 - Two indicators showing whether the imaging and wearable groups are missing.
 
 For classical models, the code compares four feature groups: imaging, wearables, clinical plus temporal/current-stage information, and all features combined. Random Forest uses median imputation. Logistic Regression uses median imputation followed by standardisation. These preprocessing steps are fitted within each model's training pipeline.

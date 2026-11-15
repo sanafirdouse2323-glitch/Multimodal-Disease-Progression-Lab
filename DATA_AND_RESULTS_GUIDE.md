@@ -51,7 +51,7 @@ The detailed upload option accepts a CSV with one row per participant visit. The
 | time_months | Yes | Numeric months since that participant's baseline visit. Must be zero or positive. A participant cannot have two rows with the same visit time. |
 | current_stage | Yes | An integer code of 0, 1, 2, or 3 recorded at that visit. The software does not define the medical meaning of these codes. |
 | age_years | No | Age in years. Nonblank values must be between 0 and 120. |
-| sex_binary | No | A numeric group code of 0 or 1. The software does not infer what either code represents. Keep its meaning and mapping documented separately. |
+| sex_binary | No | A numeric group code of 0 or 1. It is a model input and subgroup field; nonblank codes must be consistent across one participant's visits. The software does not infer what either code represents. |
 | lab_a, lab_b | No | Two generic numerical measurement fields. Their units and clinical meanings are not defined by this prototype. |
 | img_0 to img_7 | No | Eight pre-computed numerical imaging-related features. These are not image files or pixel values. |
 | wear_0 to wear_5 | No | Six pre-computed numerical wearable-related features. These are not raw sensor streams. |

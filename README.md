@@ -3,15 +3,25 @@
 **Live interactive demo:** https://multimodal-disease-progression-lab.onrender.com  
 **GitHub repository:** https://github.com/sanafirdouse2323-glitch/Multimodal-Disease-Progression-Lab
 
-**Data and results guide:** [DATA_AND_RESULTS_GUIDE.md](DATA_AND_RESULTS_GUIDE.md) — explains the generated data, CSV fields, model inputs, evaluation metrics, result tabs, and downloads.
+**Data and results guide:** [DATA_AND_RESULTS_GUIDE.md](DATA_AND_RESULTS_GUIDE.md) — explains the generated data, CSV fields, model inputs, evaluation metrics, result tabs, and downloads.  
+**How this project fits with my other work:** [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) — explains the three related repositories and what I have included in each.
 
-I built this project as an educational machine-learning and research-methods prototype. I use it to demonstrate how a workflow can combine imaging-related numerical features, wearable-style numerical features, and clinical or visit-level information when estimating a participant's stage at their next recorded visit.
+I started this project to work through some of the machine-learning questions that interest me in disease-progression research. It lets me try out a workflow using imaging-related numerical features, wearable-style numerical features, and clinical or visit-level information to predict the stage recorded at a participant's next visit. I have kept the project as a research and learning exercise, and I describe the parts that still need work below.
 
 The dashboard introduces the examples in two steps. Visitors are invited to begin with **Enter simple numbers**, which opens a pre-filled table of 30 artificial examples and runs with one click. They can then select **Synthetic demo** to explore generated imaging-related, wearable-style, and clinical/temporal features. **Upload CSV** remains available for visitors who already have a prepared dataset. The data-source choices, template download, and experiment settings are grouped in the centre of the page.
 
 The default experience uses entirely synthetic data. I do not claim that the synthetic data represent a real disease, that the generated relationships are medically established, or that the models are ready for clinical use.
 
 > **Important:** This is a research and learning prototype, not a diagnostic, prognostic, or treatment tool. The hosted website is public and receives uploaded files. Do not upload identifiable, confidential, or unauthorised health information. The app does not accept raw MRI, X-ray, image, or wearable sensor files.
+
+## How this repository fits with my other two projects
+
+I have also worked on two smaller repositories related to this topic. I keep them separate because each one was built for a different purpose; they are not connected parts of this application.
+
+- [Multimodal Disease-Progression Prototype 2](https://github.com/sanafirdouse2323-glitch/multimodal-disease-progression-prototype-2) is a standalone PyTorch example. I use it to focus on the separate feature-group encoders and the neural fusion model.
+- [Multimodal progression basic demo](https://github.com/sanafirdouse2323-glitch/multimodal-progression-basic) is a small Python project with separate simulated experiments on multimodal fusion, sparse longitudinal data, causal estimation, missing modalities, and subgroup comparisons.
+
+The three repositories use different synthetic data and different experiment setups. Their results should not be combined or compared as if they came from one experiment. I use this Lab as the main demonstration, and the other two projects as supporting examples when I need to explain a particular implementation or experiment. I have described the differences in more detail in [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md).
 
 ## What I built
 

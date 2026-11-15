@@ -82,12 +82,15 @@ def test_documentation_matches_dashboard_defaults_and_metric_definitions():
     assert '["Enter simple numbers", "Synthetic demo", "Upload CSV"]' in app_source
 
 
-def test_ci_workflow_preserves_repeated_seed_outputs():
+def test_ci_workflow_preserves_repeated_seed_outputs_and_uses_node24_actions():
     workflow = (ROOT / ".github" / "workflows" / "tests.yml").read_text(encoding="utf-8")
 
-    assert "actions/upload-artifact@v4" in workflow
+    assert "actions/checkout@v7.0.1" in workflow
+    assert "actions/setup-python@v7.1.0" in workflow
+    assert "actions/upload-artifact@v7.0.2" in workflow
     assert "/tmp/scenario-runs.csv" in workflow
     assert "/tmp/scenario-summary.csv" in workflow
+    assert "retention-days: 30" in workflow
 
 
 def test_upload_guide_matches_the_supported_csv_inputs_and_privacy_rules():

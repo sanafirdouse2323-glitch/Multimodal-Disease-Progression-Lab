@@ -63,3 +63,28 @@ def test_data_guide_explains_each_dashboard_result_and_limitations():
     assert "It does not use the progression CSV or the simple numbers entered on the homepage." in guide
     assert "not a diagnostic, prognostic, or treatment tool" in guide
     assert "not a formal fairness audit" in guide
+
+
+
+def test_documentation_matches_dashboard_defaults_and_metric_definitions():
+    guide = (ROOT / "DATA_AND_RESULTS_GUIDE.md").read_text(encoding="utf-8")
+    setup = (ROOT / "GITHUB_SETUP.md").read_text(encoding="utf-8")
+    app_source = (ROOT / "app.py").read_text(encoding="utf-8")
+
+    assert "### Balanced accuracy" in guide
+    assert "### Macro precision, macro recall, and macro-F1" in guide
+    assert "Macro-F1 is not the same as balanced accuracy." in guide
+    assert "(the balanced score)" not in guide.lower()
+    assert "Validation macro-F1" in guide
+    assert "Enter simple numbers" in setup
+    assert "Synthetic demo" in setup
+    assert "default data source is the synthetic demo" not in setup.lower()
+    assert '["Enter simple numbers", "Synthetic demo", "Upload CSV"]' in app_source
+
+
+def test_ci_workflow_preserves_repeated_seed_outputs():
+    workflow = (ROOT / ".github" / "workflows" / "tests.yml").read_text(encoding="utf-8")
+
+    assert "actions/upload-artifact@v4" in workflow
+    assert "/tmp/scenario-runs.csv" in workflow
+    assert "/tmp/scenario-summary.csv" in workflow

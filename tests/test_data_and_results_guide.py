@@ -88,3 +88,24 @@ def test_ci_workflow_preserves_repeated_seed_outputs():
     assert "actions/upload-artifact@v4" in workflow
     assert "/tmp/scenario-runs.csv" in workflow
     assert "/tmp/scenario-summary.csv" in workflow
+
+
+def test_upload_guide_matches_the_supported_csv_inputs_and_privacy_rules():
+    guide = (ROOT / "UPLOAD_DATA_GUIDE.md").read_text(encoding="utf-8")
+    data_source = (ROOT / "src" / "medprogress" / "data.py").read_text(encoding="utf-8")
+    app_source = (ROOT / "app.py").read_text(encoding="utf-8")
+
+    for field in (
+        "patient_id", "time_months", "current_stage", "age_years",
+        "sex_binary", "lab_a", "lab_b", "img_0", "img_7", "wear_0", "wear_5",
+        "Person number", "Month 0 stage", "Month 6 stage", "Month 12 stage",
+    ):
+        assert field in guide
+
+    assert "20 MB" in guide
+    assert "at least two visits" in guide
+    assert "not stratified" in guide
+    assert "separate synthetic dataset" in guide
+    assert "Do not upload" in guide
+    assert "max_upload_size=20" in app_source
+    assert "UPLOAD_REQUIRED_COLUMNS = [\"patient_id\", \"time_months\", \"current_stage\"]" in data_source

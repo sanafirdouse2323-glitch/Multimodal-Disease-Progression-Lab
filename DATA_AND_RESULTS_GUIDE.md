@@ -166,7 +166,7 @@ After a successful run, the dashboard displays four summary cards:
 
 ## 8. What the prediction scores mean
 
-The prediction-results tab compares the fused model results with reference baselines. The main metrics are:
+The Prediction results tab compares the fused models with the persistence and majority-class baselines. It reports the following metrics on the held-out test participants.
 
 ### Accuracy
 
@@ -176,18 +176,30 @@ For example, 80% accuracy means that 80 out of every 100 test examples were assi
 
 Accuracy can be high when most next-visit codes remain unchanged. This is why the persistence baseline and the changed-stage analysis are also shown.
 
-### Macro-F1 (the balanced score)
+### Balanced accuracy
 
-For each of the four stage codes, the software calculates an F1 score from precision and recall, then takes the unweighted average across codes 0, 1, 2, and 3. This gives each code equal weight in the average, rather than allowing the most common code to dominate the score.
+Balanced accuracy is the average recall across the stage classes that are present in the true test labels. It gives each represented class equal weight. If a stage class is absent from the test set, it is not included in this calculation.
 
-A higher macro-F1 indicates a better balance of precision and recall across the four codes in this test set. It is not a probability, a confidence level, or clinical validation. If a class is absent from the test data, the current implementation assigns that class an F1 contribution of zero.
+### Macro precision, macro recall, and macro-F1
+
+These metrics average the class-level values equally across the four defined stage codes: 0, 1, 2, and 3. A class absent from the test set has zero support; the implementation assigns zero to its undefined precision, recall, and F1 values when calculating the fixed-label macro averages.
+
+Macro-F1 is not the same as balanced accuracy. When all four classes are present in the test set, balanced accuracy and fixed-label macro recall will generally be equal. When a class is absent, balanced accuracy averages only the represented classes, while the fixed-label macro metrics still include all four defined codes.
+
+### Per-class metrics and confusion matrices
+
+The detailed evaluation expander shows precision, recall, F1, and support for each of the four stage codes, together with a confusion matrix for the fused Random Forest, Logistic Regression, and neural fusion models. In each confusion matrix, rows are the actual labels and columns are the predicted labels. These are test-set diagnostics, not a clinical error review.
+
+### Held-out error examples
+
+The My data and downloads tab identifies held-out examples where at least one of the three fused classifiers predicts a different label from the target. The page displays up to 50 rows, and the CSV download contains all flagged rows. The error flags do not include the persistence or majority-class baselines.
 
 ### Training history
 
 For the neural model, the training-history chart shows:
 
 - **Training loss:** the model's average training error measure during each epoch. A downward trend can indicate that the model is fitting the training data; by itself, it does not show that performance on new participants is improving.
-- **Validation macro-F1:** the balanced validation score after each epoch. The saved neural checkpoint is the epoch with the best validation macro-F1.
+- **Validation macro-F1:** the neural model's macro-F1 after each epoch. The saved neural checkpoint is the epoch with the best validation macro-F1.
 
 The test set remains separate from this checkpoint-selection process.
 
@@ -205,14 +217,7 @@ Here, a "change" means any different code. The table does not distinguish upward
 
 ## 10. What the data-group comparison means
 
-The Data groups tab compares Random Forest and Logistic Regression results using:
-
-- Imaging-related features only.
-- Wearable-style features only.
-- Clinical and visit-related features.
-- All feature groups together (multimodal fusion).
-
-The chart uses macro-F1. It shows how these feature selections performed in the selected experiment. It does not establish that one data modality is generally more useful, more reliable, or more clinically important. Results can depend on sample size, missingness, feature definitions, scenario settings, and random seed.
+The Data groups tab compares Random Forest and Logistic Regression results using imaging-related features, wearable-style features, clinical and visit-related features, and all feature groups together. The chart uses macro-F1; the table also reports accuracy, balanced accuracy, macro precision, and macro recall. The results show how these feature selections performed in the selected experiment. It does not establish that one data modality is generally more useful, more reliable, or more clinically important. Results can depend on sample size, missingness, feature definitions, scenario settings, and random seed.
 
 The simple-number option does not contain imaging or wearable measurements. The dashboard therefore explains that a full comparison of those modalities is unavailable for that route.
 
@@ -222,7 +227,7 @@ The Missing information tab uses a Random Forest trained on the original trainin
 
 The setting shown on the horizontal axis is the additional masking probability. For each test row, the software independently draws whether to mask the imaging group and whether to mask the wearable group. At 0.50, each group has a 50% additional masking chance per test row; a row can have neither, one, or both groups masked. Existing missing values in the input are not made into observed values.
 
-The model is not retrained for each masking level. The chart reports macro-F1 under this inference-time stress test. It is not an evaluation of all real-world missing-data mechanisms and does not prove robustness to missing-not-at-random data.
+The model is not retrained for each masking level. The chart reports macro-F1 under this inference-time stress test, and the table reports accuracy, balanced accuracy, macro precision, macro recall, and macro-F1. It is not an evaluation of all real-world missing-data mechanisms and does not prove robustness to missing-not-at-random data.
 
 ## 12. What the practice simulation means
 
@@ -240,7 +245,7 @@ This exercise checks estimators under a known artificial data-generating process
 
 ## 13. What the group summaries mean
 
-The Group summaries tab reports the neural fusion model's accuracy and macro-F1 for the available numeric code groups and age groups:
+The Group summaries tab reports accuracy, balanced accuracy, macro precision, macro recall, and macro-F1 for the neural fusion model in the available numeric code groups and age groups:
 
 - Numeric code groups 0 and 1 are displayed as code groups. The software does not infer their real-world meaning.
 - Age groups are split at the median age calculated from the training partition. The same threshold is applied to the test examples.
@@ -255,9 +260,10 @@ The final tab contains the visit data, prediction-example table, split sizes, an
 - **Your visit information:** rows from the prepared cohort. For simple-number input, the displayed columns are person identifier, visit month, and stage code.
 - **Visit-to-visit examples:** current visit, next-visit interval, current stage, and next-visit target. This makes the prediction task visible.
 - **Split sizes:** counts of unique participants and prediction examples in training, validation, and test partitions.
-- **Benchmark metrics (CSV):** model names, feature groups, accuracy, macro-F1, and number of test examples.
-- **Held-out predictions (CSV):** test participant code, current visit month, next-visit interval, current stage, true next-stage target, and the predictions from the Random Forest, Logistic Regression, and neural fusion model.
-- **Experiment summary (JSON):** run settings, software versions, split sizes, benchmark metrics, neural metrics, the separate synthetic causal-simulation summary, data mode, and a scope disclaimer.
+- **Benchmark metrics (CSV):** model names, feature groups, accuracy, balanced accuracy, macro precision, macro recall, macro-F1, and number of test examples.
+- **Held-out predictions (CSV):** test participant code, current visit month, next-visit interval, current stage, true next-stage target, predictions from the three fused classifiers, and one error flag for each classifier.
+- **Held-out error examples (CSV):** every test row where at least one fused classifier is incorrect. The table in the app displays up to 50 rows, while the download contains all flagged rows.
+- **Experiment summary (JSON):** run settings, software versions, split sizes, benchmark metrics, neural metrics, per-class diagnostics and confusion matrices for the fused models, the separate synthetic causal-simulation summary, data mode, and a scope disclaimer.
 
 Keep in mind that the uploaded CSV's identifiers are included in the exported held-out prediction file. Use only non-identifying study codes, and handle downloaded files according to your institution's data-protection requirements.
 

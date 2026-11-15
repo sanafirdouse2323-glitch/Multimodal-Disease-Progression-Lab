@@ -217,7 +217,7 @@ Here, a "change" means any different code. The table does not distinguish upward
 
 ## 10. What the data-group comparison means
 
-The Data groups tab compares Random Forest and Logistic Regression results using imaging-related features, wearable-style features, clinical and visit-related features, and all feature groups together. The chart uses macro-F1; the table also reports accuracy, balanced accuracy, macro precision, and macro recall. The results show how these feature selections performed in the selected experiment. It does not establish that one data modality is generally more useful, more reliable, or more clinically important. Results can depend on sample size, missingness, feature definitions, scenario settings, and random seed.
+The Data groups tab compares Random Forest and Logistic Regression using four exact feature sets: the eight imaging values plus `image_missing`; the six wearable values plus `wearable_missing`; the six clinical/visit features; and all 22 features together. The two missingness indicators are included with their own modality, not with the clinical-only group. The chart uses macro-F1; the table also reports accuracy, balanced accuracy, macro precision, and macro recall. The results show how these feature selections performed in the selected experiment. It does not establish that one data modality is generally more useful, more reliable, or more clinically important. Results can depend on sample size, missingness, feature definitions, scenario settings, and random seed.
 
 The simple-number option does not contain imaging or wearable measurements. The dashboard therefore explains that a full comparison of those modalities is unavailable for that route.
 

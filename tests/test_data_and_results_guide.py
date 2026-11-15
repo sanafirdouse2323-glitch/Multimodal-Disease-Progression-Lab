@@ -148,3 +148,16 @@ def test_upload_documentation_states_sex_code_consistency_rule():
     assert "consistent across visits for the same participant" in guide
     assert "consistent across one participant's visits" in data_guide
     assert "patients_with_conflicting_sex_codes" in data_source
+
+
+def test_documentation_matches_exact_classical_feature_group_ablation_sets():
+    data_source = (ROOT / "src" / "medprogress" / "data.py").read_text(encoding="utf-8")
+    methods = (ROOT / "METHODS_AND_LIMITATIONS.md").read_text(encoding="utf-8")
+    guide = (ROOT / "DATA_AND_RESULTS_GUIDE.md").read_text(encoding="utf-8")
+
+    assert '"Imaging": IMAGE_COLS + ["image_missing"]' in data_source
+    assert '"Wearables": WEARABLE_COLS + ["wearable_missing"]' in data_source
+    assert '"Clinical + temporal/current stage": CLINICAL_COLS' in data_source
+    assert "image_missing" in methods and "wearable_missing" in methods
+    assert "not in the clinical-only group" in methods
+    assert "not with the clinical-only group" in guide

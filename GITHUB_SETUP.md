@@ -54,7 +54,7 @@ macOS or Linux:
 
     PYTHONPATH=src python -m pytest -q
 
-For the full three-scenario repeated-seed evaluation, use the command in the README's **Run the tests and experiments** section. GitHub Actions runs the test suite, a smoke experiment, and this repeated-seed comparison on pull requests targeting main and on pushes to main. The workflow proposed in PR #10 also saves the per-run and summary CSVs as a downloadable artifact.
+For the full three-scenario repeated-seed evaluation, use the command in the README's **Run the tests and experiments** section. GitHub Actions runs the test suite, a smoke experiment, and this repeated-seed comparison on pull requests targeting main and on pushes to main. The workflow change in PR #10 saves the per-run and summary CSVs as a downloadable artifact. This change remains on the PR branch until it is merged into main.
 
 ## 6. Make a change safely
 
